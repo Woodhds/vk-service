@@ -50,6 +50,7 @@ func migrate(conn *sql.DB) {
 		OwnerId Integer,
 		RepostedFrom integer,
 		RepostsCount Integer,
+		UserReposted Boolean,
 		Text text,
 		Primary Key(Id, OwnerId) 
 		)`
@@ -118,33 +119,81 @@ func main() {
 	defer conn.Close()
 
 	migrate(conn)
-	rows, _ := conn.Query(`select Id from VkUserModel`)
 
-	var ids []int
-	for rows.Next() {
-		var id int
-		err = rows.Scan(&id)
-		if err == nil {
-			ids = append(ids, id)
+	http.HandleFunc("/messages", func(rw http.ResponseWriter, r *http.Request) {
+		search := r.URL.Query().Get("search")
+
+		rw.Header().Add("Access-control-allow-origin", "*")
+		rw.Header().Add("Access-control-allow-method", "*")
+		rw.Header().Add("Access-control-allow-headers", "*")
+
+		res, e := conn.Query(`
+			SELECT messages.Id, FromId, Date, Images, LikesCount, Owner, messages.OwnerId, RepostedFrom, RepostsCount, messages.Text, UserReposted
+			FROM messages inner join messages_search as search  on messages.Id = search.Id AND  messages.OwnerId = search.OwnerId 
+				where search.Text MATCH @search
+				order by rank desc
+				`, sql.Named("search", fmt.Sprintf(`"%s"`, search)))
+
+		if e != nil {
+			rw.WriteHeader(http.StatusBadRequest)
+			return
 		}
-	}
 
-	var mutex sync.Mutex
-	var wg sync.WaitGroup
+		var data []message.VkMessageModel
 
-	httpClient := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-
-	for _, id := range ids {
-		for i := 1; i <= 4; i++ {
-			wg.Add(1)
-			go getMessages(&mutex, conn, httpClient, &wg, id, i)
-			if err != nil {
-				fmt.Println(err)
+		for res.Next() {
+			m := message.VkMessageModel{}
+			e := res.Scan(&m.ID, &m.FromID, &m.Date, &m.Images, &m.LikesCount, &m.Owner, &m.OwnerID, &m.RepostedFrom, &m.RepostsCount, &m.Text, &m.UserReposted)
+			if e == nil {
+				data = append(data, m)
 			}
 		}
-	}
+		defer res.Close()
 
-	wg.Wait()
+		json, e := json.Marshal(data)
+
+		if e == nil {
+			rw.Header().Add("Content-type", "application/json")
+			rw.Write(json)
+		}
+
+		fmt.Println(search)
+
+	})
+
+	http.HandleFunc("/grab", func(rw http.ResponseWriter, r *http.Request) {
+		rows, _ := conn.Query(`select Id from VkUserModel`)
+
+		var ids []int
+		for rows.Next() {
+			var id int
+			err = rows.Scan(&id)
+			if err == nil {
+				ids = append(ids, id)
+			}
+		}
+
+		rows.Close()
+
+		var mutex sync.Mutex
+		var wg sync.WaitGroup
+
+		httpClient := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+
+		for _, id := range ids {
+			for i := 1; i <= 4; i++ {
+				wg.Add(1)
+				go getMessages(&mutex, conn, httpClient, &wg, id, i)
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+		}
+
+		wg.Wait()
+	})
+
+	http.ListenAndServe("localhost:4222", nil)
 }
 
 func getMessages(mutex *sync.Mutex, conn *sql.DB, httpClient *http.Client, wg *sync.WaitGroup, id int, page int) {
@@ -211,17 +260,17 @@ func getMessages(mutex *sync.Mutex, conn *sql.DB, httpClient *http.Client, wg *s
 
 			c = c + 1
 
-			sqlResult, sqlErr := tran.Exec(`insert or ignore into messages (Id, FromId, Date, Images, LikesCount, Owner, OwnerId, RepostedFrom, RepostsCount, Text) 
-			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-				m.ID, m.FromID, time.Time(*m.Date), strings.Join(m.Images, ";"), m.LikesCount, m.Owner, m.OwnerID, m.RepostedFrom, m.RepostsCount, m.Text)
+			_, sqlErr := tran.Exec(`
+			insert or ignore into messages (Id, FromId, Date, Images, LikesCount, Owner, OwnerId, RepostedFrom, RepostsCount, Text, UserReposted) 
+			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+			ON CONFLICT(id, ownerId) DO UPDATE SET LikesCount=excluded.LikesCount, RepostsCount=excluded.RepostsCount, UserReposted=excluded.UserReposted`,
+				m.ID, m.FromID, time.Time(*m.Date), strings.Join(m.Images, ";"), m.LikesCount, m.Owner, m.OwnerID, m.RepostedFrom, m.RepostsCount, m.Text, m.UserReposted)
 
 			if sqlErr != nil {
 				log.Print(sqlErr)
-			} else {
-				rowAffected, _ := sqlResult.RowsAffected()
-				log.Printf("Row affected: %d", rowAffected)
 			}
 		}
+
 		tran.Commit()
 	}
 	mutex.Unlock()
@@ -252,6 +301,10 @@ func vkMessageModel(post *message.VkMessage, id int, groups []*message.VkGroup) 
 		if g.ID == -post.OwnerID {
 			model.Owner = g.Name
 		}
+	}
+
+	if post.Reposts.UserReposted == 1 {
+		model.UserReposted = true
 	}
 
 	return model

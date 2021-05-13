@@ -51,7 +51,8 @@ type VkGroup struct {
 }
 
 type VkReposts struct {
-	Count int `json:"count"`
+	Count        int `json:"count"`
+	UserReposted int `json:"user_reposted"`
 }
 
 type VkLikes struct {
