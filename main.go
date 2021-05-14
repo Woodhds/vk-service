@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"user-fetcher/database"
 	message "user-fetcher/message"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -21,78 +22,6 @@ import (
 var token string
 var version string
 var count int
-
-func migrate(conn *sql.DB) {
-	log.Println("Start Migrate")
-	createUserStm := `CREATE TABLE IF NOT EXISTS VkUserModel 
-	(
-		Id INTEGER,
-		PRIMARY KEY(Id)
-	)
-	`
-	log.Println("Create VkUserModel")
-	log.Println(createUserStm)
-	_, createRes := conn.Exec(createUserStm)
-	if createRes != nil {
-		log.Fatal(createRes)
-	}
-
-	log.Println("Created VkUserModel")
-
-	createUserStm = `
-	CREATE TABLE IF NOT EXISTS messages(
-		Id Integer,
-		FromId Integer,
-		Date DateTime,
-		Images TExt,
-		LikesCount integer,
-		Owner Text,
-		OwnerId Integer,
-		RepostedFrom integer,
-		RepostsCount Integer,
-		UserReposted Boolean,
-		Text text,
-		Primary Key(Id, OwnerId) 
-		)`
-	_, crecreateRes := conn.Exec(createUserStm)
-
-	if crecreateRes != nil {
-		log.Fatal(createRes)
-	}
-
-	log.Println("Create Fulltext search table")
-
-	createUserStm = `
-	CREATE VIRTUAL TABLE IF NOT EXISTS messages_search USING fts5(Id, OwnerId, Text)
-	`
-
-	_, crecreateRes = conn.Exec(createUserStm)
-
-	if crecreateRes != nil {
-		log.Fatal("Error occured during creating virtual table: ", createUserStm)
-		panic(crecreateRes)
-	}
-
-	log.Println("Created messages")
-
-	log.Println("Create on create trigger for full text search")
-	createUserStm = `
-	CREATE TRIGGER IF NOT EXISTS TR_messages_AI AFTER INSERT on messages
-	BEGIN
-		INSERT INTO messages_search (Id, OwnerId, Text) VALUES (new.Id, new.OwnerId, new.Text);
-	END;
-	`
-	_, crecreateRes = conn.Exec(createUserStm)
-
-	if crecreateRes != nil {
-		log.Fatalln("Error creating TRIGGER on message: ", crecreateRes)
-		panic(crecreateRes)
-	}
-
-	log.Println("Trigger created")
-
-	log.Println("Stop migrate")
-}
 
 func main() {
 
@@ -118,7 +47,7 @@ func main() {
 
 	defer conn.Close()
 
-	migrate(conn)
+	database.Migrate(conn)
 
 	http.HandleFunc("/messages", func(rw http.ResponseWriter, r *http.Request) {
 		search := r.URL.Query().Get("search")
@@ -256,10 +185,8 @@ func getMessages(mutex *sync.Mutex, conn *sql.DB, httpClient *http.Client, wg *s
 		tran, _ := conn.BeginTx(context.Background(), &sql.TxOptions{Isolation: sql.LevelDefault})
 		for _, post := range posts.Response.Items {
 
-			m = vkMessageModel(post, id, posts.Response.Groups)
-
+			m = message.New(post, id, posts.Response.Groups)
 			c = c + 1
-
 			_, sqlErr := tran.Exec(`
 			insert or ignore into messages (Id, FromId, Date, Images, LikesCount, Owner, OwnerId, RepostedFrom, RepostsCount, Text, UserReposted) 
 			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
@@ -275,37 +202,4 @@ func getMessages(mutex *sync.Mutex, conn *sql.DB, httpClient *http.Client, wg *s
 	}
 	mutex.Unlock()
 	fmt.Printf("Fetched: %d\n", c)
-}
-
-func vkMessageModel(post *message.VkMessage, id int, groups []*message.VkGroup) *message.VkMessageModel {
-	model := &message.VkMessageModel{
-		ID:           post.ID,
-		FromID:       post.FromID,
-		Date:         post.Date,
-		Images:       []string{},
-		LikesCount:   post.Likes.Count,
-		Owner:        "",
-		OwnerID:      post.OwnerID,
-		RepostedFrom: id,
-		RepostsCount: post.Reposts.Count,
-		Text:         post.Text,
-	}
-
-	for _, i := range post.Attachments {
-		if len(i.Photo.Sizes) > 2 {
-			model.Images = append(model.Images, i.Photo.Sizes[3].Url)
-		}
-	}
-
-	for _, g := range groups {
-		if g.ID == -post.OwnerID {
-			model.Owner = g.Name
-		}
-	}
-
-	if post.Reposts.UserReposted == 1 {
-		model.UserReposted = true
-	}
-
-	return model
 }

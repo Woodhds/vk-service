@@ -31,3 +31,36 @@ func (n *ImageArray) Scan(value interface{}) error {
 
 	return nil
 }
+
+func New(post *VkMessage, id int, groups []*VkGroup) *VkMessageModel {
+	model := &VkMessageModel{
+		ID:           post.ID,
+		FromID:       post.FromID,
+		Date:         post.Date,
+		Images:       []string{},
+		LikesCount:   post.Likes.Count,
+		Owner:        "",
+		OwnerID:      post.OwnerID,
+		RepostedFrom: id,
+		RepostsCount: post.Reposts.Count,
+		Text:         post.Text,
+	}
+
+	for _, i := range post.Attachments {
+		if len(i.Photo.Sizes) > 2 {
+			model.Images = append(model.Images, i.Photo.Sizes[3].Url)
+		}
+	}
+
+	for _, g := range groups {
+		if g.ID == -post.OwnerID {
+			model.Owner = g.Name
+		}
+	}
+
+	if post.Reposts.UserReposted == 1 {
+		model.UserReposted = true
+	}
+
+	return model
+}
