@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -22,12 +24,20 @@ import (
 var token string
 var version string
 var count int
+var clientId int
+
+type VkUserMdodel struct {
+	Id     int    `json:"id"`
+	Name   string `json:"name"`
+	Avatar string `json:"avatar"`
+}
 
 func main() {
 
 	flag.StringVar(&token, "token", "", "access token required")
 	flag.StringVar(&version, "version", "", "version required")
 	flag.IntVar(&count, "count", 10, "used count")
+	flag.IntVar(&clientId, "clientId", 0, "clientId required")
 	flag.Parse()
 
 	if token == "" {
@@ -120,6 +130,52 @@ func main() {
 		}
 
 		wg.Wait()
+	})
+
+	http.HandleFunc("/users", func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Add("Access-control-allow-origin", "*")
+		rw.Header().Add("Access-control-allow-method", "*")
+		rw.Header().Add("Access-control-allow-headers", "*")
+
+		if rows, e := conn.Query(`SELECT Id, Name, Avatar from VkUserModel`); e != nil {
+			rw.WriteHeader(http.StatusBadRequest)
+			return
+		} else {
+			defer rows.Close()
+
+			var res []VkUserMdodel
+
+			for rows.Next() {
+				u := VkUserMdodel{}
+				rows.Scan(&u.Id, &u.Name, &u.Avatar)
+				res = append(res, u)
+			}
+
+			if j, e := json.Marshal(res); e != nil {
+				rw.WriteHeader(http.StatusBadRequest)
+			} else {
+				rw.Write(j)
+				rw.Header().Add("Content-type", "application/json")
+			}
+		}
+	})
+
+	http.HandleFunc("/authorize", func(rw http.ResponseWriter, r *http.Request) {
+
+		rw.Header().Add("Access-control-allow-origin", "*")
+		rw.Header().Add("Access-control-allow-method", "*")
+		rw.Header().Add("Access-control-allow-headers", "*")
+
+		redirectUrl := url.URL{Scheme: "https", Host: "oauth.vk.com"}
+		query := redirectUrl.Query()
+		query.Add("client_id", strconv.Itoa(clientId))
+		query.Add("redirect_uri", "http://localhost:4222/callback")
+		query.Add("display", "page")
+		query.Add("scope", "111111111")
+		query.Add("response_type", "code")
+		query.Add("v", version)
+		redirectUrl.RawQuery = query.Encode()
+		http.Redirect(rw, r, redirectUrl.String(), http.StatusTemporaryRedirect)
 	})
 
 	http.ListenAndServe("localhost:4222", nil)

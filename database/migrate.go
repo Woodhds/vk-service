@@ -10,6 +10,8 @@ func Migrate(conn *sql.DB) {
 	createUserStm := `CREATE TABLE IF NOT EXISTS VkUserModel 
 	(
 		Id INTEGER,
+		Avatar Text,
+		Name Text,
 		PRIMARY KEY(Id)
 	)
 	`
