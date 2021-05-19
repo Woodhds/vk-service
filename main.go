@@ -18,6 +18,7 @@ import (
 	"user-fetcher/database"
 	message "user-fetcher/message"
 
+	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -59,12 +60,18 @@ func main() {
 
 	database.Migrate(conn)
 
-	http.HandleFunc("/messages", func(rw http.ResponseWriter, r *http.Request) {
-		search := r.URL.Query().Get("search")
+	r := mux.NewRouter()
 
+	r.HandleFunc("/messages", func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Add("Access-control-allow-origin", "*")
 		rw.Header().Add("Access-control-allow-method", "*")
 		rw.Header().Add("Access-control-allow-headers", "*")
+
+		if r.Method == http.MethodOptions {
+			return
+		}
+
+		search := r.URL.Query().Get("search")
 
 		res, e := conn.Query(`
 			SELECT messages.Id, FromId, Date, Images, LikesCount, Owner, messages.OwnerId, RepostedFrom, RepostsCount, messages.Text, UserReposted
@@ -100,7 +107,7 @@ func main() {
 
 	})
 
-	http.HandleFunc("/grab", func(rw http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/grab", func(rw http.ResponseWriter, r *http.Request) {
 		rows, _ := conn.Query(`select Id from VkUserModel`)
 
 		var ids []int
@@ -132,10 +139,14 @@ func main() {
 		wg.Wait()
 	})
 
-	http.HandleFunc("/users", func(rw http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/users", func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Add("Access-control-allow-origin", "*")
 		rw.Header().Add("Access-control-allow-method", "*")
 		rw.Header().Add("Access-control-allow-headers", "*")
+
+		if r.Method == http.MethodOptions {
+			return
+		}
 
 		if rows, e := conn.Query(`SELECT Id, Name, Avatar from VkUserModel`); e != nil {
 			rw.WriteHeader(http.StatusBadRequest)
@@ -160,13 +171,17 @@ func main() {
 		}
 	})
 
-	http.HandleFunc("/authorize", func(rw http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/authorize", func(rw http.ResponseWriter, r *http.Request) {
 
 		rw.Header().Add("Access-control-allow-origin", "*")
 		rw.Header().Add("Access-control-allow-method", "*")
 		rw.Header().Add("Access-control-allow-headers", "*")
 
-		redirectUrl := url.URL{Scheme: "https", Host: "oauth.vk.com"}
+		if r.Method == http.MethodOptions {
+			return
+		}
+
+		redirectUrl := url.URL{Scheme: "https", Host: "oauth.vk.com", Path: "/authorize"}
 		query := redirectUrl.Query()
 		query.Add("client_id", strconv.Itoa(clientId))
 		query.Add("redirect_uri", "http://localhost:4222/callback")
@@ -175,10 +190,10 @@ func main() {
 		query.Add("response_type", "code")
 		query.Add("v", version)
 		redirectUrl.RawQuery = query.Encode()
-		http.Redirect(rw, r, redirectUrl.String(), http.StatusTemporaryRedirect)
-	})
+		http.Redirect(rw, r, redirectUrl.String(), http.StatusSeeOther)
+	}).Methods(http.MethodPost, http.MethodOptions)
 
-	http.ListenAndServe("localhost:4222", nil)
+	http.ListenAndServe(":4222", r)
 }
 
 func getMessages(mutex *sync.Mutex, conn *sql.DB, httpClient *http.Client, wg *sync.WaitGroup, id int, page int) {
