@@ -10,8 +10,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -170,28 +168,6 @@ func main() {
 			}
 		}
 	})
-
-	r.HandleFunc("/authorize", func(rw http.ResponseWriter, r *http.Request) {
-
-		rw.Header().Add("Access-control-allow-origin", "*")
-		rw.Header().Add("Access-control-allow-method", "*")
-		rw.Header().Add("Access-control-allow-headers", "*")
-
-		if r.Method == http.MethodOptions {
-			return
-		}
-
-		redirectUrl := url.URL{Scheme: "https", Host: "oauth.vk.com", Path: "/authorize"}
-		query := redirectUrl.Query()
-		query.Add("client_id", strconv.Itoa(clientId))
-		query.Add("redirect_uri", "http://localhost:4222/callback")
-		query.Add("display", "page")
-		query.Add("scope", "111111111")
-		query.Add("response_type", "code")
-		query.Add("v", version)
-		redirectUrl.RawQuery = query.Encode()
-		http.Redirect(rw, r, redirectUrl.String(), http.StatusSeeOther)
-	}).Methods(http.MethodPost, http.MethodOptions)
 
 	http.ListenAndServe(":4222", r)
 }
