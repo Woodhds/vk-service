@@ -10,20 +10,34 @@ import (
 	"time"
 )
 
-type VkClient interface {
-	New(accessToken string, v string) (error, interface{})
-	Request(method string, url string, body io.Reader)
-}
-
 type BaseClient struct {
 	client  *http.Client
 	baseUrl *url.URL
 }
 
 type Response struct {
+	reader io.ReadCloser
 }
 
-func (client *BaseClient) New(accessToken string, v string) (*BaseClient, error) {
+func (resp *Response) Read(dest *interface{}) error {
+	defer resp.reader.Close()
+
+	b, err := io.ReadAll(resp.reader)
+
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(b, &dest)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func New(accessToken string, v string) (*BaseClient, error) {
 	if accessToken == "" {
 		return nil, errors.New("access token required")
 	}
@@ -51,7 +65,7 @@ func (client *BaseClient) New(accessToken string, v string) (*BaseClient, error)
 	}, nil
 }
 
-func (client *BaseClient) Request(method string, url string) (*interface{}, error) {
+func (client *BaseClient) Request(method string, url string) (*Response, error) {
 	request, err := http.NewRequest(method, client.baseUrl.String(), nil)
 
 	if err != nil {
@@ -63,21 +77,6 @@ func (client *BaseClient) Request(method string, url string) (*interface{}, erro
 		return nil, err
 	}
 
-	defer response.Body.Close()
+	return &Response{response.Body}, nil
 
-	b, err := io.ReadAll(request.Body)
-
-	if err != nil {
-		return nil, err
-	}
-
-	data := &Response{}
-
-	err = json.Unmarshal(b, &data)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
 }
