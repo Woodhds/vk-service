@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"flag"
@@ -13,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	client "user-fetcher/client"
 	"user-fetcher/database"
 	message "user-fetcher/message"
 
@@ -122,12 +121,10 @@ func main() {
 		var mutex sync.Mutex
 		var wg sync.WaitGroup
 
-		httpClient := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-
 		for _, id := range ids {
 			for i := 1; i <= 4; i++ {
 				wg.Add(1)
-				go getMessages(&mutex, conn, httpClient, &wg, id, i)
+				go getMessages(&mutex, conn, &wg, id, i)
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -172,55 +169,30 @@ func main() {
 	http.ListenAndServe(":4222", r)
 }
 
-func getMessages(mutex *sync.Mutex, conn *sql.DB, httpClient *http.Client, wg *sync.WaitGroup, id int, page int) {
+func getMessages(mutex *sync.Mutex, conn *sql.DB, wg *sync.WaitGroup, id int, page int) {
 	defer wg.Done()
 	mutex.Lock()
 
-	url := fmt.Sprintf(`https://api.vk.com/method/wall.get?owner_id=%d&offset=%d&filter=owner&count=%d&extended=1&access_token=%s&v=%s`,
-		id, (page-1)*count, count, token, version)
+	wallClient, _ := client.NewWallClient(token, version)
 
-	fmt.Printf("Request URL: %s", url)
-
-	resp, e := httpClient.Get(url)
+	data, e := wallClient.Get(&client.WallGetRequest{OwnerId: id, Offset: (page - 1) * count, Count: count})
 
 	if e != nil {
 		fmt.Println(e)
 		return
-	}
-
-	if resp == nil {
-		fmt.Println("RESPONSE NULL")
-		return
-	}
-
-	defer resp.Body.Close()
-
-	var data message.VkWallResponse
-	err := json.NewDecoder(resp.Body).Decode(&data)
-
-	if err != nil {
-		fmt.Println(err)
 	}
 
 	time.Sleep(time.Millisecond * 500)
 
-	var yt bytes.Buffer
-	for _, dataItem := range data.Response.Items {
-		if len(dataItem.CopyHistory) > 0 {
-			yt.WriteString(fmt.Sprintf("%d_%d,", dataItem.CopyHistory[0].OwnerID, dataItem.CopyHistory[0].ID))
+	var reposts []message.VkRepostMessage
+
+	for _, v := range data.Response.Items {
+		if len(v.CopyHistory) > 0 {
+			reposts = append(reposts, message.VkRepostMessage{OwnerID: v.CopyHistory[0].OwnerID, ID: v.CopyHistory[0].ID})
 		}
 	}
 
-	url = fmt.Sprintf(`https://api.vk.com/method/wall.getById?posts=%s&extended=1&access_token=%s&v=%s`, yt.String(), token, version)
-
-	resp, _ = httpClient.Get(url)
-
-	var posts message.VkResponse
-
-	e = json.NewDecoder(resp.Body).Decode(&posts)
-	if e != nil {
-		fmt.Println(e)
-	}
+	posts, _ := wallClient.GetById(&reposts)
 
 	time.Sleep(time.Millisecond * 500)
 

@@ -8,6 +8,11 @@ import (
 
 type Timestamp time.Time
 
+type VkRepostMessage struct {
+	OwnerID int `json:"owner_id"`
+	ID      int `json:"id"`
+}
+
 type VkWallResponse struct {
 	Response struct {
 		Items []struct {
