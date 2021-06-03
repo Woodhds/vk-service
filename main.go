@@ -11,9 +11,12 @@ import (
 	"strings"
 	"sync"
 	"time"
-	client "user-fetcher/client"
-	"user-fetcher/database"
-	message "user-fetcher/message"
+
+	"github.com/woodhds/vk.service/database"
+
+	message "github.com/woodhds/vk.service/message"
+
+	client "github.com/woodhds/vk.service/vkclient"
 
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
