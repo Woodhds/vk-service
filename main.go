@@ -169,6 +169,10 @@ func main() {
 		}
 	})
 
+	r.HandleFunc("/users/search", func(rw http.ResponseWriter, r *http.Request) {
+
+	})
+
 	http.ListenAndServe(":4222", r)
 }
 
