@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/woodhds/vk.service/database"
+	"github.com/woodhds/vk.service/vkclient"
 
 	message "github.com/woodhds/vk.service/message"
 
@@ -26,12 +27,6 @@ var token string
 var version string
 var count int
 var clientId int
-
-type VkUserMdodel struct {
-	Id     int    `json:"id"`
-	Name   string `json:"name"`
-	Avatar string `json:"avatar"`
-}
 
 func main() {
 
@@ -151,10 +146,10 @@ func main() {
 		} else {
 			defer rows.Close()
 
-			var res []VkUserMdodel
+			var res []vkclient.VkUserMdodel
 
 			for rows.Next() {
-				u := VkUserMdodel{}
+				u := vkclient.VkUserMdodel{}
 				rows.Scan(&u.Id, &u.Name, &u.Avatar)
 				res = append(res, u)
 			}
@@ -169,8 +164,23 @@ func main() {
 	})
 
 	r.HandleFunc("/users/search", func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Add("Access-control-allow-origin", "*")
+		rw.Header().Add("Access-control-allow-method", "*")
+		rw.Header().Add("Access-control-allow-headers", "*")
 
-	})
+		q := r.URL.Query().Get("q")
+
+		if q == "" {
+			return
+		}
+
+		client, _ := vkclient.NewUserClient(token, version)
+		response, _ := client.Search(q)
+
+		rw.Header().Add("Content-type", "application/json")
+		json.NewEncoder(rw).Encode(&response)
+
+	}).Methods(http.MethodGet, http.MethodOptions)
 
 	http.ListenAndServe(":4222", r)
 }
