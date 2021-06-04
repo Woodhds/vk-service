@@ -1,4 +1,4 @@
-module user-fetcher
+module github.com/woodhds/vk.service
 
 go 1.16
 

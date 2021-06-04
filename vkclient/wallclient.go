@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"net/url"
-	"user-fetcher/message"
+
+	"github.com/woodhds/vk.service/message"
 )
 
 type WallClient struct {

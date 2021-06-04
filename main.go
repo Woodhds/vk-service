@@ -11,9 +11,12 @@ import (
 	"strings"
 	"sync"
 	"time"
-	client "user-fetcher/client"
-	"user-fetcher/database"
-	message "user-fetcher/message"
+
+	"github.com/woodhds/vk.service/database"
+
+	message "github.com/woodhds/vk.service/message"
+
+	client "github.com/woodhds/vk.service/vkclient"
 
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
@@ -163,6 +166,10 @@ func main() {
 				rw.Header().Add("Content-type", "application/json")
 			}
 		}
+	})
+
+	r.HandleFunc("/users/search", func(rw http.ResponseWriter, r *http.Request) {
+
 	})
 
 	http.ListenAndServe(":4222", r)
