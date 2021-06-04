@@ -8,11 +8,13 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 )
 
 type BaseClient struct {
 	client      *http.Client
+	m           *sync.Mutex
 	baseUrl     *url.URL
 	accessToken string
 	version     string
@@ -21,6 +23,8 @@ type BaseClient struct {
 type Response struct {
 	reader *http.Response
 }
+
+var mutex sync.Mutex
 
 func (resp *Response) Read(dest interface{}) error {
 	defer resp.reader.Body.Close()
@@ -67,6 +71,7 @@ func New(accessToken string, v string) (*BaseClient, error) {
 		baseUrl:     addr,
 		accessToken: accessToken,
 		version:     v,
+		m:           &mutex,
 	}, nil
 }
 
@@ -86,7 +91,12 @@ func (client *BaseClient) Request(httpMethod string, path string, query string, 
 		return nil, err
 	}
 
+	client.m.Lock()
+
 	response, err := client.client.Do(request)
+
+	time.Sleep(time.Millisecond * 500)
+	client.m.Unlock()
 
 	if err != nil {
 		return nil, err

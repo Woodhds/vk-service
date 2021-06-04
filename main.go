@@ -118,13 +118,12 @@ func main() {
 
 		rows.Close()
 
-		var mutex sync.Mutex
 		var wg sync.WaitGroup
 
 		for _, id := range ids {
 			for i := 1; i <= 4; i++ {
 				wg.Add(1)
-				go getMessages(&mutex, conn, &wg, id, i)
+				go getMessages(conn, &wg, id, i)
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -169,9 +168,8 @@ func main() {
 	http.ListenAndServe(":4222", r)
 }
 
-func getMessages(mutex *sync.Mutex, conn *sql.DB, wg *sync.WaitGroup, id int, page int) {
+func getMessages(conn *sql.DB, wg *sync.WaitGroup, id int, page int) {
 	defer wg.Done()
-	mutex.Lock()
 
 	wallClient, _ := client.NewWallClient(token, version)
 
@@ -181,8 +179,6 @@ func getMessages(mutex *sync.Mutex, conn *sql.DB, wg *sync.WaitGroup, id int, pa
 		fmt.Println(e)
 		return
 	}
-
-	time.Sleep(time.Millisecond * 500)
 
 	var reposts []message.VkRepostMessage
 
@@ -219,6 +215,6 @@ func getMessages(mutex *sync.Mutex, conn *sql.DB, wg *sync.WaitGroup, id int, pa
 
 		tran.Commit()
 	}
-	mutex.Unlock()
+
 	fmt.Printf("Fetched: %d\n", c)
 }
