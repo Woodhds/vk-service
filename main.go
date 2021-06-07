@@ -19,6 +19,7 @@ import (
 
 	client "github.com/woodhds/vk.service/vkclient"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -58,13 +59,6 @@ func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/messages", func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Add("Access-control-allow-origin", "*")
-		rw.Header().Add("Access-control-allow-method", "*")
-		rw.Header().Add("Access-control-allow-headers", "*")
-
-		if r.Method == http.MethodOptions {
-			return
-		}
 
 		search := r.URL.Query().Get("search")
 
@@ -94,7 +88,6 @@ func main() {
 		json, e := json.Marshal(data)
 
 		if e == nil {
-			rw.Header().Add("Content-type", "application/json")
 			rw.Write(json)
 		}
 
@@ -132,41 +125,50 @@ func main() {
 	})
 
 	r.HandleFunc("/users", func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Add("Access-control-allow-origin", "*")
-		rw.Header().Add("Access-control-allow-method", "*")
-		rw.Header().Add("Access-control-allow-headers", "*")
 
-		if r.Method == http.MethodOptions {
-			return
-		}
+		if r.Method == http.MethodGet {
 
-		if rows, e := conn.Query(`SELECT Id, Name, Avatar from VkUserModel`); e != nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			return
-		} else {
-			defer rows.Close()
-
-			var res []vkclient.VkUserMdodel
-
-			for rows.Next() {
-				u := vkclient.VkUserMdodel{}
-				rows.Scan(&u.Id, &u.Name, &u.Avatar)
-				res = append(res, u)
-			}
-
-			if j, e := json.Marshal(res); e != nil {
+			if rows, e := conn.Query(`SELECT Id, Name, Avatar from VkUserModel`); e != nil {
 				rw.WriteHeader(http.StatusBadRequest)
+				return
 			} else {
-				rw.Write(j)
-				rw.Header().Add("Content-type", "application/json")
+				defer rows.Close()
+
+				var res []vkclient.VkUserMdodel
+
+				for rows.Next() {
+					u := vkclient.VkUserMdodel{}
+					rows.Scan(&u.Id, &u.Name, &u.Avatar)
+					res = append(res, u)
+				}
+
+				if j, e := json.Marshal(res); e != nil {
+					rw.WriteHeader(http.StatusBadRequest)
+				} else {
+					rw.Write(j)
+				}
 			}
 		}
-	})
+
+		if r.Method == http.MethodPost {
+			u := &client.VkUserMdodel{}
+			json.NewDecoder(r.Body).Decode(u)
+
+			if u.Id == 0 {
+				rw.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			_, e := conn.Exec(`INSERT INTO VkUserModel (Id, Avatar, Name) VALUES ($1, $2, $3)`, u.Id, u.Avatar, u.Name)
+
+			if e != nil {
+				rw.WriteHeader(http.StatusBadRequest)
+			}
+		}
+
+	}).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
 
 	r.HandleFunc("/users/search", func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Add("Access-control-allow-origin", "*")
-		rw.Header().Add("Access-control-allow-method", "*")
-		rw.Header().Add("Access-control-allow-headers", "*")
 
 		q := r.URL.Query().Get("q")
 
@@ -177,12 +179,11 @@ func main() {
 		client, _ := vkclient.NewUserClient(token, version)
 		response, _ := client.Search(q)
 
-		rw.Header().Add("Content-type", "application/json")
 		json.NewEncoder(rw).Encode(&response)
 
 	}).Methods(http.MethodGet, http.MethodOptions)
 
-	http.ListenAndServe(":4222", r)
+	http.ListenAndServe(":4222", handlers.ContentTypeHandler(handlers.CORS()(r), "application/json"))
 }
 
 func getMessages(conn *sql.DB, wg *sync.WaitGroup, id int, page int) {
