@@ -9,15 +9,13 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/woodhds/vk.service/database"
+	"github.com/woodhds/vk.service/middlewares"
 	"github.com/woodhds/vk.service/vkclient"
 
 	message "github.com/woodhds/vk.service/message"
-
-	client "github.com/woodhds/vk.service/vkclient"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -90,9 +88,6 @@ func main() {
 		if e == nil {
 			rw.Write(json)
 		}
-
-		fmt.Println(search)
-
 	})
 
 	r.HandleFunc("/grab", func(rw http.ResponseWriter, r *http.Request) {
@@ -109,19 +104,14 @@ func main() {
 
 		rows.Close()
 
-		var wg sync.WaitGroup
-
 		for _, id := range ids {
 			for i := 1; i <= 4; i++ {
-				wg.Add(1)
-				go getMessages(conn, &wg, id, i)
+				go getMessages(conn, id, i)
 				if err != nil {
 					fmt.Println(err)
 				}
 			}
 		}
-
-		wg.Wait()
 	})
 
 	r.HandleFunc("/users", func(rw http.ResponseWriter, r *http.Request) {
@@ -151,7 +141,7 @@ func main() {
 		}
 
 		if r.Method == http.MethodPost {
-			u := &client.VkUserMdodel{}
+			u := &vkclient.VkUserMdodel{}
 			json.NewDecoder(r.Body).Decode(u)
 
 			if u.Id == 0 {
@@ -183,15 +173,14 @@ func main() {
 
 	}).Methods(http.MethodGet, http.MethodOptions)
 
-	http.ListenAndServe(":4222", handlers.ContentTypeHandler(handlers.CORS()(r), "application/json"))
+	http.ListenAndServe(":4222", middlewares.UseContentTypeMiddleWare(handlers.CORS()(r), "application/json"))
 }
 
-func getMessages(conn *sql.DB, wg *sync.WaitGroup, id int, page int) {
-	defer wg.Done()
+func getMessages(conn *sql.DB, id int, page int) {
 
-	wallClient, _ := client.NewWallClient(token, version)
+	wallClient, _ := vkclient.NewWallClient(token, version)
 
-	data, e := wallClient.Get(&client.WallGetRequest{OwnerId: id, Offset: (page - 1) * count, Count: count})
+	data, e := wallClient.Get(&vkclient.WallGetRequest{OwnerId: id, Offset: (page - 1) * count, Count: count})
 
 	if e != nil {
 		fmt.Println(e)
