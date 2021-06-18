@@ -51,8 +51,9 @@ type VkMessage struct {
 }
 
 type VkGroup struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	IsMember int    `json:"is_member"`
 }
 
 type VkReposts struct {

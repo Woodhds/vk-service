@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/woodhds/vk.service/message"
 )
@@ -21,6 +22,12 @@ type WallGetRequest struct {
 	Offset   int
 	Count    int
 	Extended bool
+}
+
+type RepostResponse struct {
+	Response struct {
+		Success int `json:"success"`
+	} `json:"response"`
 }
 
 func NewWallClient(token string, version string) (*WallClient, error) {
@@ -71,14 +78,14 @@ func (wallClient *WallClient) Get(request *WallGetRequest) (*message.VkWallRespo
 	return data, nil
 }
 
-func (wallClient *WallClient) GetById(messages *[]message.VkRepostMessage) (*message.VkResponse, error) {
+func (wallClient *WallClient) GetById(messages *[]message.VkRepostMessage, fields ...string) (*message.VkResponse, error) {
 	var yt bytes.Buffer
 	for _, dataItem := range *messages {
 
 		yt.WriteString(fmt.Sprintf("%d_%d,", dataItem.OwnerID, dataItem.ID))
 	}
 
-	url := fmt.Sprintf(`posts=%s&extended=1`, yt.String())
+	url := fmt.Sprintf(`posts=%s&extended=1&fields=%s`, yt.String(), strings.Join(fields, ","))
 
 	response, e := wallClient.baseclient.Get("wall.getById", url)
 
@@ -91,4 +98,22 @@ func (wallClient *WallClient) GetById(messages *[]message.VkRepostMessage) (*mes
 	response.Read(data)
 
 	return data, nil
+}
+
+func (walllClient *WallClient) Repost(message *message.VkRepostMessage) error {
+	q := fmt.Sprintf("object=wall%d_%d", message.OwnerID, message.ID)
+
+	resp, e := walllClient.baseclient.Get("wall.repost", q)
+
+	if e != nil {
+		return e
+	}
+
+	var data RepostResponse
+
+	if e := resp.Read(&data); e != nil {
+		return e
+	}
+
+	return nil
 }

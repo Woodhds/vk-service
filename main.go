@@ -10,15 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/cors"
 	"github.com/woodhds/vk.service/database"
-	"github.com/woodhds/vk.service/middlewares"
 	"github.com/woodhds/vk.service/vkclient"
 
-	message "github.com/woodhds/vk.service/message"
-
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
+	message "github.com/woodhds/vk.service/message"
 )
 
 var token string
@@ -82,11 +80,7 @@ func main() {
 		}
 		defer res.Close()
 
-		json, e := json.Marshal(data)
-
-		if e == nil {
-			rw.Write(json)
-		}
+		Json(rw, data)
 	})
 
 	r.HandleFunc("/grab", func(rw http.ResponseWriter, r *http.Request) {
@@ -111,7 +105,7 @@ func main() {
 				}
 			}
 		}
-	})
+	}).Methods(http.MethodGet)
 
 	r.HandleFunc("/users", func(rw http.ResponseWriter, r *http.Request) {
 
@@ -131,11 +125,7 @@ func main() {
 					res = append(res, u)
 				}
 
-				if j, e := json.Marshal(res); e != nil {
-					rw.WriteHeader(http.StatusBadRequest)
-				} else {
-					rw.Write(j)
-				}
+				Json(rw, res)
 			}
 		}
 
@@ -157,6 +147,34 @@ func main() {
 
 	}).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
 
+	r.HandleFunc("/repost", func(rw http.ResponseWriter, r *http.Request) {
+
+		var d []message.VkRepostMessage
+		json.NewDecoder(r.Body).Decode(&d)
+
+		go func() {
+
+			wallClient, _ := vkclient.NewWallClient(token, version)
+			groupClient, _ := vkclient.NewGroupClient(token, version)
+
+			data, _ := wallClient.GetById(&d, "is_member")
+
+			for _, d := range data.Response.Groups {
+				if d.IsMember == 0 {
+					groupClient.Join(d.ID)
+				}
+			}
+
+			for _, i := range data.Response.Items {
+				wallClient.Repost(&message.VkRepostMessage{OwnerID: i.OwnerID, ID: i.ID})
+			}
+
+		}()
+
+		rw.WriteHeader(http.StatusOK)
+
+	}).Methods(http.MethodPost, http.MethodOptions)
+
 	r.HandleFunc("/users/search", func(rw http.ResponseWriter, r *http.Request) {
 
 		q := r.URL.Query().Get("q")
@@ -172,7 +190,7 @@ func main() {
 
 	}).Methods(http.MethodGet, http.MethodOptions)
 
-	http.ListenAndServe(":4222", middlewares.UseContentTypeMiddleWare(handlers.CORS()(r), "application/json"))
+	http.ListenAndServe(":4222", cors.Default().Handler(r))
 }
 
 func getMessages(conn *sql.DB, id int, page int) {
