@@ -55,7 +55,6 @@ func Migrate(conn *sql.DB) {
 
 	if crecreateRes != nil {
 		log.Fatal("Error occured during creating virtual table: ", createUserStm)
-		panic(crecreateRes)
 	}
 
 	log.Println("Created messages")
@@ -71,7 +70,6 @@ func Migrate(conn *sql.DB) {
 
 	if crecreateRes != nil {
 		log.Fatalln("Error creating TRIGGER on message: ", crecreateRes)
-		panic(crecreateRes)
 	}
 
 	log.Println("Trigger created")
