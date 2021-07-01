@@ -3,14 +3,14 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"github.com/gorilla/mux"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/cors"
 	"github.com/woodhds/vk.service/database"
 	"github.com/woodhds/vk.service/handlers"
+	"google.golang.org/grpc"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/mux"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 var token string
@@ -54,6 +54,7 @@ func main() {
 	r.Path("/repost").Handler(handlers.RepostHandler(token, version)).Methods(http.MethodPost, http.MethodOptions)
 
 	r.Path("/users/search").Handler(handlers.UsersSearchHandler(token, version)).Methods(http.MethodGet, http.MethodOptions)
+	r.Path("/messages/{ownerId:[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(cc)).Methods(http.MethodPost)
 
 	http.ListenAndServe(":4222", cors.Default().Handler(r))
 }
