@@ -8,7 +8,6 @@ import (
 	"github.com/rs/cors"
 	"github.com/woodhds/vk.service/database"
 	"github.com/woodhds/vk.service/handlers"
-	"google.golang.org/grpc"
 	"log"
 	"net/http"
 )
@@ -16,12 +15,14 @@ import (
 var token string
 var version string
 var count int
+var host string
 
 func main() {
 
 	flag.StringVar(&token, "token", "", "access token required")
 	flag.StringVar(&version, "version", "", "version required")
 	flag.IntVar(&count, "count", 10, "used count")
+	flag.StringVar(&host, "host", "", "host save not setup")
 	flag.Parse()
 
 	if token == "" {
@@ -54,7 +55,7 @@ func main() {
 	r.Path("/repost").Handler(handlers.RepostHandler(token, version)).Methods(http.MethodPost, http.MethodOptions)
 
 	r.Path("/users/search").Handler(handlers.UsersSearchHandler(token, version)).Methods(http.MethodGet, http.MethodOptions)
-	r.Path("/messages/{ownerId:[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(cc)).Methods(http.MethodPost)
+	r.Path("/messages/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(host)).Methods(http.MethodPost)
 
 	http.ListenAndServe(":4222", cors.Default().Handler(r))
 }

@@ -10,6 +10,7 @@ message MessageSaveRequest {
   int32 owner_id = 1;
   int32 id = 2;
   string category = 3;
+  string text = 4;
 }
 
 message MessageSaveResponse {
