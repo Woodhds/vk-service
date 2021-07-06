@@ -8,6 +8,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/woodhds/vk.service/database"
 	"github.com/woodhds/vk.service/handlers"
+	"github.com/woodhds/vk.service/predictor"
 	"log"
 	"net/http"
 )
@@ -40,22 +41,24 @@ func main() {
 		return
 	}
 
+	predictorClient, _ := predictor.NewClient(host)
+
 	defer conn.Close()
 
 	database.Migrate(conn)
 
 	r := mux.NewRouter()
 
-	r.Path("/messages").Handler(handlers.MessagesHandler(conn)).Methods(http.MethodGet)
+	r.Path("/messages").Handler(handlers.MessagesHandler(conn, predictorClient)).Methods(http.MethodGet)
 
 	r.Path("/grab").Handler(handlers.ParserHandler(conn, token, version, count)).Methods(http.MethodGet)
 
 	r.Path("/users").Handler(handlers.UsersHandler(conn)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
 
-	r.Path("/repost").Handler(handlers.RepostHandler(token, version)).Methods(http.MethodPost, http.MethodOptions)
+	r.Path("/repost").Handler(handlers.RepostHandler(conn, token, version)).Methods(http.MethodPost, http.MethodOptions)
 
 	r.Path("/users/search").Handler(handlers.UsersSearchHandler(token, version)).Methods(http.MethodGet, http.MethodOptions)
-	r.Path("/messages/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(host, conn)).Methods(http.MethodPost)
+	r.Path("/messages/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(predictorClient, conn)).Methods(http.MethodPost)
 
 	http.ListenAndServe(":4222", cors.Default().Handler(r))
 }

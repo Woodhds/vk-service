@@ -27,7 +27,7 @@ func (n *ImageArray) Scan(value interface{}) error {
 	}
 	s := fmt.Sprint(value)
 
-	*n = ImageArray(strings.Split(s, ";"))
+	*n = strings.Split(s, ";")
 
 	return nil
 }

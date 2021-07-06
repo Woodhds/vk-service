@@ -4,10 +4,16 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/woodhds/vk.service/message"
+	"github.com/woodhds/vk.service/predictor"
 	"net/http"
 )
 
-func MessagesHandler(conn *sql.DB) http.Handler {
+type VkCategorizedMessageModel struct {
+	message.VkMessageModel
+	Category string `json:"category"`
+}
+
+func MessagesHandler(conn *sql.DB, predictorClient predictor.Predictor) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		search := r.URL.Query().Get("search")
 
@@ -23,16 +29,34 @@ func MessagesHandler(conn *sql.DB) http.Handler {
 			return
 		}
 
-		var data []message.VkMessageModel
+		var data []VkCategorizedMessageModel
+		var predictions []*predictor.PredictMessage
 
 		for res.Next() {
-			m := message.VkMessageModel{}
+			m := VkCategorizedMessageModel{}
 			e := res.Scan(&m.ID, &m.FromID, &m.Date, &m.Images, &m.LikesCount, &m.Owner, &m.OwnerID, &m.RepostedFrom, &m.RepostsCount, &m.Text, &m.UserReposted)
 			if e == nil {
 				data = append(data, m)
+				predictions = append(predictions, &predictor.PredictMessage{
+					OwnerId:  m.OwnerID,
+					Id:       m.ID,
+					Category: "",
+					Text:     m.Text,
+				})
 			}
 		}
-		defer res.Close()
+		res.Close()
+
+		if respPredictions, e := predictorClient.Predict(predictions); e == nil {
+			for i := 0; i < len(data); i++ {
+				for j := 0; j < len(respPredictions); j++ {
+					if respPredictions[j].Id == data[i].ID && data[i].OwnerID == respPredictions[j].OwnerId {
+						data[i].Category = respPredictions[j].Category
+						break
+					}
+				}
+			}
+		}
 
 		Json(rw, data)
 	})
