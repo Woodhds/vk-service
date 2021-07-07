@@ -9,7 +9,7 @@ import (
 )
 
 type VkCategorizedMessageModel struct {
-	message.VkMessageModel
+	*message.VkMessageModel
 	Category string `json:"category"`
 }
 
@@ -29,14 +29,16 @@ func MessagesHandler(conn *sql.DB, predictorClient predictor.Predictor) http.Han
 			return
 		}
 
-		var data []VkCategorizedMessageModel
+		var data []*VkCategorizedMessageModel
 		var predictions []*predictor.PredictMessage
 
 		for res.Next() {
-			m := VkCategorizedMessageModel{}
+			m := VkCategorizedMessageModel{
+				VkMessageModel: &message.VkMessageModel{},
+			}
 			e := res.Scan(&m.ID, &m.FromID, &m.Date, &m.Images, &m.LikesCount, &m.Owner, &m.OwnerID, &m.RepostedFrom, &m.RepostsCount, &m.Text, &m.UserReposted)
 			if e == nil {
-				data = append(data, m)
+				data = append(data, &m)
 				predictions = append(predictions, &predictor.PredictMessage{
 					OwnerId:  m.OwnerID,
 					Id:       m.ID,
@@ -48,16 +50,21 @@ func MessagesHandler(conn *sql.DB, predictorClient predictor.Predictor) http.Han
 		res.Close()
 
 		if respPredictions, e := predictorClient.Predict(predictions); e == nil {
-			for i := 0; i < len(data); i++ {
-				for j := 0; j < len(respPredictions); j++ {
-					if respPredictions[j].Id == data[i].ID && data[i].OwnerID == respPredictions[j].OwnerId {
-						data[i].Category = respPredictions[j].Category
-						break
-					}
-				}
-			}
+			MapCategoriesToMessages(data, respPredictions)
 		}
+
 
 		Json(rw, data)
 	})
+}
+
+func MapCategoriesToMessages(data []*VkCategorizedMessageModel, predictions []*predictor.PredictMessage) {
+	for i := 0; i < len(data); i++ {
+		for j := 0; j < len(predictions); j++ {
+			if predictions[j].Id == data[i].ID && data[i].OwnerID == predictions[j].OwnerId {
+				data[i].Category = predictions[j].Category
+				break
+			}
+		}
+	}
 }
