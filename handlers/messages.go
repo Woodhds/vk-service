@@ -11,6 +11,7 @@ import (
 type VkCategorizedMessageModel struct {
 	*message.VkMessageModel
 	Category string `json:"category"`
+	IsAccept bool   `json:"isAccept"`
 }
 
 func MessagesHandler(conn *sql.DB, predictorClient predictor.Predictor) http.Handler {
@@ -53,7 +54,6 @@ func MessagesHandler(conn *sql.DB, predictorClient predictor.Predictor) http.Han
 			MapCategoriesToMessages(data, respPredictions)
 		}
 
-
 		Json(rw, data)
 	})
 }
@@ -63,6 +63,7 @@ func MapCategoriesToMessages(data []*VkCategorizedMessageModel, predictions []*p
 		for j := 0; j < len(predictions); j++ {
 			if predictions[j].Id == data[i].ID && data[i].OwnerID == predictions[j].OwnerId {
 				data[i].Category = predictions[j].Category
+				data[i].IsAccept = predictions[j].IsAccept
 				break
 			}
 		}

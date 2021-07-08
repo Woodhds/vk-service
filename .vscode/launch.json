@@ -10,15 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${fileDirname}",
-            "buildFlags": "-tags=fts5",
-            "args": [
-                "--token",
-                "6b066d614f742ff2850d568b8676e4e0240c2768088a5c3c58b2306047544a650219d8b8ecb079f5c1e72",
-                "--version",
-                "5.130",
-                "--count",
-                "50"
-            ]
+            "buildFlags": "-tags=fts5"
         }
     ]
 }

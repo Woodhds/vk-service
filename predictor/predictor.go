@@ -14,6 +14,7 @@ type PredictMessage struct {
 	Id       int    `json:"id"`
 	Category string `json:"category"`
 	Text     string `json:"text"`
+	IsAccept bool   `json:"isAccept"`
 }
 
 type Predictor interface {
