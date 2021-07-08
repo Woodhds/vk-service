@@ -27,10 +27,10 @@ type SavePredictRequest struct {
 }
 
 type saveRequest struct {
-	ownerId  int
-	id       int
-	text     string
-	category string
+	OwnerId  int    `json:"ownerId"`
+	Id       int    `json:"id"`
+	Text     string `json:"text"`
+	Category string `json:"category"`
 }
 
 type PredictorClient struct {
@@ -40,10 +40,10 @@ type PredictorClient struct {
 
 func (c PredictorClient) SaveMessage(owner int, id int, text string, category string) error {
 	reqData := &saveRequest{
-		ownerId:  owner,
-		id:       id,
-		text:     text,
-		category: category,
+		OwnerId:  owner,
+		Id:       id,
+		Text:     text,
+		Category: category,
 	}
 	b, _ := json.Marshal(reqData)
 
@@ -81,6 +81,7 @@ func (c PredictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage,
 				for _, h := range respData {
 					if r.Id == h.Id && r.OwnerId == h.OwnerId {
 						r.Category = h.Category
+						r.IsAccept = h.IsAccept
 						break
 					}
 				}
