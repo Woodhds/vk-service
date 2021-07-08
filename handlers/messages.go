@@ -19,7 +19,7 @@ func MessagesHandler(conn *sql.DB, predictorClient predictor.Predictor) http.Han
 		search := r.URL.Query().Get("search")
 
 		res, e := conn.Query(`
-			SELECT messages.Id, FromId, Date, Images, LikesCount, Owner, messages.OwnerId, RepostedFrom, RepostsCount, messages.Text, UserReposted
+			SELECT messages.Id, FromId, Date, Images, LikesCount, Owner, messages.OwnerId, RepostedFrom, RepostsCount, highlight(messages_search, 2, '<b><i><big>', '</big></i></b>') as Text, UserReposted
 			FROM messages inner join messages_search as search  on messages.Id = search.Id AND  messages.OwnerId = search.OwnerId 
 				where search.Text MATCH @search
 				order by rank desc
@@ -50,8 +50,10 @@ func MessagesHandler(conn *sql.DB, predictorClient predictor.Predictor) http.Han
 		}
 		res.Close()
 
-		if respPredictions, e := predictorClient.Predict(predictions); e == nil {
-			MapCategoriesToMessages(data, respPredictions)
+		if len(data) > 0 {
+			if respPredictions, e := predictorClient.Predict(predictions); e == nil {
+				MapCategoriesToMessages(data, respPredictions)
+			}
 		}
 
 		Json(rw, data)

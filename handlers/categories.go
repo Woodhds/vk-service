@@ -39,6 +39,8 @@ func MessageSaveHandler(predict predictor.Predictor, conn *sql.DB) http.Handler 
 			for d.Next() {
 				d.Scan(&text)
 			}
+
+			d.Close()
 		}
 
 		if e := predict.SaveMessage(owner, messageId, text, data.Category); e != nil {
