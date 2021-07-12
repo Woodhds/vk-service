@@ -11,8 +11,7 @@ import (
 func UsersHandler(conn *sql.DB) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
-
-			if rows, e := conn.Query(`SELECT Id, Name, Avatar from VkUserModel`); e != nil {
+			if rows, e := conn.Query(`SELECT Id, coalesce(Name, '') as Name, coalesce(Avatar,'') as Avatar from VkUserModel`); e != nil {
 				rw.WriteHeader(http.StatusBadRequest)
 				return
 			} else {
