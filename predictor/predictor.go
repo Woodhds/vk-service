@@ -73,7 +73,7 @@ func (c PredictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage,
 				return messages, errors.New(fmt.Sprintf("Server responded with status %d", resp.StatusCode))
 			}
 
-			var respData []PredictMessage
+			var respData []*PredictMessage
 
 			json.NewDecoder(resp.Body).Decode(&respData)
 

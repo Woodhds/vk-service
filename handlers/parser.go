@@ -13,6 +13,7 @@ import (
 
 func ParserHandler(conn *sql.DB, token string, version string, count int) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+
 		rows, _ := conn.Query(`select Id from VkUserModel`)
 		var err error
 
@@ -37,7 +38,6 @@ func ParserHandler(conn *sql.DB, token string, version string, count int) http.H
 		}
 	})
 }
-
 
 func getMessages(conn *sql.DB, id int, page int, token string, version string, count int) {
 
