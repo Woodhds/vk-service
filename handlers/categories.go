@@ -30,20 +30,23 @@ func MessageSaveHandler(predict predictor.Predictor, conn *sql.DB) http.Handler 
 			return
 		}
 
-		var text string
+		var message struct {
+			text string
+			owner string
+		}
 
-		if d, e := conn.Query("SELECT Text from messages where OwnerId = $1 and Id = $2", owner, messageId); e != nil {
+		if d, e := conn.Query("SELECT Text, Owner from messages where OwnerId = $1 and Id = $2", owner, messageId); e != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		} else {
 			for d.Next() {
-				d.Scan(&text)
+				d.Scan(&message.text, &message.owner)
 			}
 
 			d.Close()
 		}
 
-		if e := predict.SaveMessage(owner, messageId, text, data.Category); e != nil {
+		if e := predict.SaveMessage(owner, messageId, message.text, message.owner, data.Category); e != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 		}
 		Json(rw, true)

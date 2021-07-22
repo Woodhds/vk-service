@@ -19,7 +19,7 @@ type PredictMessage struct {
 
 type Predictor interface {
 	Predict(messages []*PredictMessage) ([]*PredictMessage, error)
-	SaveMessage(owner int, id int, text string, category string) error
+	SaveMessage(owner int, id int, text string, ownerName string, category string) error
 }
 
 type SavePredictRequest struct {
@@ -27,10 +27,11 @@ type SavePredictRequest struct {
 }
 
 type saveRequest struct {
-	OwnerId  int    `json:"ownerId"`
-	Id       int    `json:"id"`
-	Text     string `json:"text"`
-	Category string `json:"category"`
+	OwnerId   int    `json:"ownerId"`
+	Id        int    `json:"id"`
+	Text      string `json:"text"`
+	Category  string `json:"category"`
+	OwnerName string `json:"ownerName"`
 }
 
 type PredictorClient struct {
@@ -38,12 +39,13 @@ type PredictorClient struct {
 	host       string
 }
 
-func (c PredictorClient) SaveMessage(owner int, id int, text string, category string) error {
+func (c PredictorClient) SaveMessage(owner int, id int, text string, ownerName string, category string) error {
 	reqData := &saveRequest{
-		OwnerId:  owner,
-		Id:       id,
-		Text:     text,
-		Category: category,
+		OwnerId:   owner,
+		Id:        id,
+		Text:      text,
+		Category:  category,
+		OwnerName: ownerName,
 	}
 	b, _ := json.Marshal(reqData)
 
