@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"fmt"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/cors"
@@ -13,10 +14,12 @@ import (
 	"net/http"
 )
 
-var token string
-var version string
-var count int
-var host string
+var (
+	token   string
+	version string
+	count   int
+	host    string
+)
 
 func main() {
 
@@ -47,7 +50,8 @@ func main() {
 
 	database.Migrate(conn)
 
-	r := mux.NewRouter()
+	router := mux.NewRouter()
+	r := router.PathPrefix("/api").Subrouter()
 
 	r.Path("/messages").Handler(handlers.MessagesHandler(conn, predictorClient)).Methods(http.MethodGet)
 
@@ -61,5 +65,5 @@ func main() {
 	r.Path("/messages/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(predictorClient, conn)).Methods(http.MethodPost)
 	r.Path("/notifications").Handler(handlers.NotificationHandler()).Methods(http.MethodGet)
 
-	http.ListenAndServe(":4222", cors.Default().Handler(r))
+	fmt.Println(http.ListenAndServe(":4222", cors.Default().Handler(r)))
 }
