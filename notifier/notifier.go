@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	Danger  = iota
 	Success = iota
+	Danger  = iota
 	Warning = iota
 )
 
@@ -35,6 +35,7 @@ func (n notifyService) Listen() http.Handler {
 		rw.Header().Set("content-type", "text/event-stream")
 		rw.Header().Set("cache-control", "no-cache")
 		rw.Header().Set("connection", "keep-alive")
+		flusher.Flush()
 
 		for {
 			select {

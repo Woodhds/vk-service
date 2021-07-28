@@ -7,6 +7,9 @@ import (
 
 func LikeHandler(service notifier.Notifier) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		service.Success("like complete")
+		go func() {
+			service.Success("like complete")
+		}()
+		rw.WriteHeader(http.StatusOK)
 	})
 }
