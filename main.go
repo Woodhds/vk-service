@@ -9,6 +9,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/woodhds/vk.service/database"
 	"github.com/woodhds/vk.service/handlers"
+	"github.com/woodhds/vk.service/notifier"
 	"github.com/woodhds/vk.service/predictor"
 	"log"
 	"net/http"
@@ -45,6 +46,7 @@ func main() {
 	}
 
 	predictorClient, _ := predictor.NewClient(host)
+	notifyService := notifier.NewNotifyService()
 
 	defer conn.Close()
 
@@ -54,6 +56,7 @@ func main() {
 	r := router.PathPrefix("/api").Subrouter()
 
 	r.Path("/messages").Handler(handlers.MessagesHandler(conn, predictorClient)).Methods(http.MethodGet)
+	r.Path("/like").Handler(handlers.LikeHandler(notifyService)).Methods(http.MethodPost)
 
 	r.Path("/grab").Handler(handlers.ParserHandler(conn, token, version, count)).Methods(http.MethodGet)
 
@@ -63,7 +66,7 @@ func main() {
 
 	r.Path("/users/search").Handler(handlers.UsersSearchHandler(token, version)).Methods(http.MethodGet, http.MethodOptions)
 	r.Path("/messages/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(predictorClient, conn)).Methods(http.MethodPost)
-	r.Path("/notifications").Handler(handlers.NotificationHandler()).Methods(http.MethodGet)
+	r.Path("/notifications").Handler(notifyService.Listen()).Methods(http.MethodGet)
 
 	fmt.Println(http.ListenAndServe(":4222", cors.Default().Handler(r)))
 }
