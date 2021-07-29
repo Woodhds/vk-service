@@ -66,7 +66,7 @@ func main() {
 
 	r.Path("/users/search").Handler(handlers.UsersSearchHandler(token, version)).Methods(http.MethodGet, http.MethodOptions)
 	r.Path("/messages/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(predictorClient, conn)).Methods(http.MethodPost)
-	r.Path("/notifications").Handler(notifyService.Listen()).Methods(http.MethodGet)
+	r.Path("/notifications").Handler(notifier.NotificationHandler(notifyService)).Methods(http.MethodGet)
 
 	fmt.Println(http.ListenAndServe(":4222", cors.Default().Handler(r)))
 }

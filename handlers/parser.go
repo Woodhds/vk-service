@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func ParserHandler(conn *sql.DB, token string, version string, count int, notifier notifier.Notifier) http.Handler {
+func ParserHandler(conn *sql.DB, token string, version string, count int, notifier *notifier.NotifyService) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		defer func() {
 			notifier.Success("Grab start")

@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func LikeHandler(service notifier.Notifier) http.Handler {
+func LikeHandler(service *notifier.NotifyService) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		go func() {
 			service.Success("like complete")
