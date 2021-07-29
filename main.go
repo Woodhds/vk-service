@@ -58,7 +58,7 @@ func main() {
 	r.Path("/messages").Handler(handlers.MessagesHandler(conn, predictorClient)).Methods(http.MethodGet)
 	r.Path("/like").Handler(handlers.LikeHandler(notifyService)).Methods(http.MethodPost)
 
-	r.Path("/grab").Handler(handlers.ParserHandler(conn, token, version, count)).Methods(http.MethodGet)
+	r.Path("/grab").Handler(handlers.ParserHandler(conn, token, version, count, notifyService)).Methods(http.MethodGet)
 
 	r.Path("/users").Handler(handlers.UsersHandler(conn)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
 
