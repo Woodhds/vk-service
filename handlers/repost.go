@@ -10,13 +10,13 @@ import (
 
 func RepostHandler(conn *sql.DB, token string, version string) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		var d []message.VkRepostMessage
+		var d []*message.VkRepostMessage
 		json.NewDecoder(r.Body).Decode(&d)
 
 		wallClient, _ := vkclient.NewWallClient(token, version)
 		groupClient, _ := vkclient.NewGroupClient(token, version)
 
-		data, _ := wallClient.GetById(&d, "is_member")
+		data, _ := wallClient.GetById(d, "is_member")
 
 		for _, d := range data.Response.Groups {
 			if d.IsMember == 0 {

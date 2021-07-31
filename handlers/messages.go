@@ -25,8 +25,7 @@ func MessagesHandler(conn *sql.DB, predictorClient predictor.Predictor) http.Han
 			       Images, 
 			       LikesCount, 
 			       Owner, 
-			       messages.OwnerId, 
-			       RepostedFrom, 
+			       messages.OwnerId,
 			       RepostsCount, 
 			       highlight(messages_search, 2, '<b><i><big>', '</big></i></b>') as Text, 
 			       UserReposted
@@ -47,7 +46,7 @@ func MessagesHandler(conn *sql.DB, predictorClient predictor.Predictor) http.Han
 			m := VkCategorizedMessageModel{
 				VkMessageModel: &message.VkMessageModel{},
 			}
-			e := res.Scan(&m.ID, &m.FromID, &m.Date, &m.Images, &m.LikesCount, &m.Owner, &m.OwnerID, &m.RepostedFrom, &m.RepostsCount, &m.Text, &m.UserReposted)
+			e := res.Scan(&m.ID, &m.FromID, &m.Date, &m.Images, &m.LikesCount, &m.Owner, &m.OwnerID, &m.RepostsCount, &m.Text, &m.UserReposted)
 			if e == nil {
 				data = append(data, &m)
 				predictions = append(predictions, &predictor.PredictMessage{

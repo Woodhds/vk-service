@@ -78,9 +78,9 @@ func (wallClient *WallClient) Get(request *WallGetRequest) (*message.VkWallRespo
 	return data, nil
 }
 
-func (wallClient *WallClient) GetById(messages *[]message.VkRepostMessage, fields ...string) (*message.VkResponse, error) {
+func (wallClient *WallClient) GetById(messages []*message.VkRepostMessage, fields ...string) (*message.VkResponse, error) {
 	var yt bytes.Buffer
-	for _, dataItem := range *messages {
+	for _, dataItem := range messages {
 
 		yt.WriteString(fmt.Sprintf("%d_%d,", dataItem.OwnerID, dataItem.ID))
 	}

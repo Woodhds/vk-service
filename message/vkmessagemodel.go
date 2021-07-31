@@ -15,7 +15,6 @@ type VkMessageModel struct {
 	LikesCount   int        `json:"likesCount"`
 	Owner        string     `json:"owner"`
 	OwnerID      int        `json:"ownerId"`
-	RepostedFrom int        `json:"repostedFrom"`
 	RepostsCount int        `json:"repostsCount"`
 	Text         string     `json:"text"`
 	UserReposted bool       `json:"userReposted"`
@@ -32,7 +31,7 @@ func (n *ImageArray) Scan(value interface{}) error {
 	return nil
 }
 
-func New(post *VkMessage, id int, groups []*VkGroup) *VkMessageModel {
+func New(post *VkMessage, groups []*VkGroup) *VkMessageModel {
 	model := &VkMessageModel{
 		ID:           post.ID,
 		FromID:       post.FromID,
@@ -41,7 +40,6 @@ func New(post *VkMessage, id int, groups []*VkGroup) *VkMessageModel {
 		LikesCount:   post.Likes.Count,
 		Owner:        "",
 		OwnerID:      post.OwnerID,
-		RepostedFrom: id,
 		RepostsCount: post.Reposts.Count,
 		Text:         post.Text,
 	}
