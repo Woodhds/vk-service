@@ -95,7 +95,7 @@ func (client *BaseClient) Request(httpMethod string, path string, query string, 
 
 	response, err := client.client.Do(request)
 
-	time.Sleep(time.Millisecond * 500)
+	time.Sleep(time.Second * 2)
 	client.m.Unlock()
 
 	if err != nil {
