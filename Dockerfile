@@ -36,5 +36,11 @@ FROM scratch
 
 COPY --from=builder /dist/main /
 
+ENV PORT=8000
+ENV HOST=""
+ENV COUNT=50
+ENV VERSION=""
+ENV TOKEN=""
+
 # Command to run
-CMD ["/main"]
+CMD main --port ${PORT} --host ${HOST} --count ${HOST} --version ${VERSION} --token ${TOKEN}
