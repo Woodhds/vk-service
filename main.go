@@ -47,6 +47,7 @@ func main() {
 
 	predictorClient, _ := predictor.NewClient(host)
 	notifyService := notifier.NewNotifyService()
+	messageQueryService := database.NewMessageQueryService(conn)
 
 	defer conn.Close()
 
@@ -55,7 +56,7 @@ func main() {
 	router := mux.NewRouter()
 	r := router.PathPrefix("/api").Subrouter()
 
-	r.Path("/messages").Handler(handlers.MessagesHandler(conn, predictorClient)).Methods(http.MethodGet)
+	r.Path("/messages").Handler(handlers.MessagesHandler(messageQueryService, predictorClient)).Methods(http.MethodGet)
 	r.Path("/like").Handler(handlers.LikeHandler(notifyService)).Methods(http.MethodPost)
 
 	r.Path("/grab").Handler(handlers.ParserHandler(conn, token, version, count, notifyService)).Methods(http.MethodGet)
