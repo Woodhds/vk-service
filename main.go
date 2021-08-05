@@ -2,17 +2,18 @@ package main
 
 import (
 	"database/sql"
-	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/cors"
+	"github.com/woodhds/vk.service/config"
 	"github.com/woodhds/vk.service/database"
 	"github.com/woodhds/vk.service/handlers"
 	"github.com/woodhds/vk.service/notifier"
 	"github.com/woodhds/vk.service/predictor"
 	"log"
 	"net/http"
+	"os"
 )
 
 var (
@@ -20,17 +21,15 @@ var (
 	version string
 	count   int
 	host    string
-	port int
+	port    int
 )
 
 func main() {
-
-	flag.StringVar(&token, "token", "", "access token required")
-	flag.StringVar(&version, "version", "", "version required")
-	flag.IntVar(&count, "count", 10, "used count")
-	flag.StringVar(&host, "host", "", "host save not setup")
-	flag.IntVar(&port, "port", 4222, "use default port")
-	flag.Parse()
+	token = os.Getenv("TOKEN")
+	version = os.Getenv("VERSION")
+	config.ParseInt(&count, 50, os.Getenv("COUNT"))
+	host = os.Getenv("HOST")
+	config.ParseInt(&port, 4222, os.Getenv("PORT"))
 
 	if token == "" {
 		panic("access token required")
