@@ -6,6 +6,11 @@ ENV GO111MODULE=on \
     GOOS=linux \
     GOARCH=amd64
 
+RUN apk update \
+    && apk add --no-cache ca-certificates \
+    && apk add --update gcc musl-dev \
+    && update-ca-certificates
+
 # Move to working directory /build
 WORKDIR /build
 
@@ -18,7 +23,7 @@ RUN go mod download
 COPY . .
 
 # Build the application
-RUN go build -o main .
+RUN go build -tags=fts5 -o main .
 
 # Move to /dist directory as the place for resulting binary folder
 WORKDIR /dist
