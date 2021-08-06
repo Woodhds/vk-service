@@ -10,11 +10,8 @@ import (
 )
 
 type WallClient struct {
-	baseclient *BaseClient
+	baseClient *BaseClient
 }
-
-const FILTER_OWNER = "owner"
-const FILTER_ALL = "all"
 
 type WallGetRequest struct {
 	Filter   string
@@ -38,13 +35,13 @@ func NewWallClient(token string, version string) (*WallClient, error) {
 	}
 
 	return &WallClient{
-		baseclient: baseClient,
+		baseClient: baseClient,
 	}, nil
 }
 
 func (wallClient *WallClient) Get(request *WallGetRequest) (*message.VkWallResponse, error) {
-	url := url.URL{}
-	query := url.Query()
+	u := url.URL{}
+	query := u.Query()
 	query.Add("filter", request.Filter)
 	query.Add("owner_id", fmt.Sprintf("%d", request.OwnerId))
 	query.Add("offset", fmt.Sprintf("%d", request.Offset))
@@ -59,9 +56,9 @@ func (wallClient *WallClient) Get(request *WallGetRequest) (*message.VkWallRespo
 	}
 
 	query.Add("extended", fmt.Sprintf("%d", extended))
-	url.RawQuery = query.Encode()
+	u.RawQuery = query.Encode()
 
-	resp, e := wallClient.baseclient.Get("wall.get", url.String())
+	resp, e := wallClient.baseClient.Get("wall.get", u.String())
 
 	if e != nil {
 		return nil, e
@@ -85,9 +82,9 @@ func (wallClient *WallClient) GetById(messages []*message.VkRepostMessage, field
 		yt.WriteString(fmt.Sprintf("%d_%d,", dataItem.OwnerID, dataItem.ID))
 	}
 
-	url := fmt.Sprintf(`posts=%s&extended=1&fields=%s`, yt.String(), strings.Join(fields, ","))
+	u := fmt.Sprintf(`posts=%s&extended=1&fields=%s`, yt.String(), strings.Join(fields, ","))
 
-	response, e := wallClient.baseclient.Get("wall.getById", url)
+	response, e := wallClient.baseClient.Get("wall.getById", u)
 
 	if e != nil {
 		return nil, e
@@ -95,15 +92,17 @@ func (wallClient *WallClient) GetById(messages []*message.VkRepostMessage, field
 
 	data := &message.VkResponse{}
 
-	response.Read(data)
+	if e:= response.Read(data); e != nil {
+		return nil, e
+	}
 
 	return data, nil
 }
 
-func (walllClient *WallClient) Repost(message *message.VkRepostMessage) error {
+func (wallClient *WallClient) Repost(message *message.VkRepostMessage) error {
 	q := fmt.Sprintf("object=wall%d_%d", message.OwnerID, message.ID)
 
-	resp, e := walllClient.baseclient.Get("wall.repost", q)
+	resp, e := wallClient.baseClient.Get("wall.repost", q)
 
 	if e != nil {
 		return e
