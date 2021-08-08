@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
@@ -15,6 +16,9 @@ import (
 	"net/http"
 	"os"
 )
+
+//go:embed data.db
+var db []byte
 
 var (
 	token   string
