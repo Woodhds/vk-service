@@ -39,8 +39,9 @@ ENV PORT=8000 \
     COUNT=50 \
     VERSION="" \
     TOKEN=""
+EXPOSE 8080
 
 COPY --from=builder /dist/main /
 
 # Command to run
-CMD ["/main"]
+CMD ["./main"]
