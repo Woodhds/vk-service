@@ -43,4 +43,4 @@ ENV VERSION=""
 ENV TOKEN=""
 
 # Command to run
-CMD main --port ${PORT} --host ${HOST} --count ${HOST} --version ${VERSION} --token ${TOKEN}
+CMD ["/main"]
