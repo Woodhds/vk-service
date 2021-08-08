@@ -2,7 +2,7 @@ FROM golang:alpine AS builder
 
 # Set necessary environmet variables needed for our image
 ENV GO111MODULE=on \
-    CGO_ENABLED=1 \
+    CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64
 
@@ -34,13 +34,13 @@ RUN cp /build/main .
 # Build a small image
 FROM scratch
 
-COPY --from=builder /dist/main /
+ENV PORT=8000 \
+    HOST="" \
+    COUNT=50 \
+    VERSION="" \
+    TOKEN=""
 
-ENV PORT=8000
-ENV HOST=""
-ENV COUNT=50
-ENV VERSION=""
-ENV TOKEN=""
+COPY --from=builder /dist/main /
 
 # Command to run
 CMD ["/main"]
