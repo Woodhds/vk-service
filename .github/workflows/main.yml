@@ -14,7 +14,7 @@ jobs:
         env:
           HEROKU_EMAIL: ${{secrets.HEROKU_EMAIL}}
           HEROKU_PASSWORD: ${{secrets.HEROKU_PASSWORD}}
-        run: echo -e "machine api.heroku.com\n login $HEROKU_EMAIL password $HEROKU_PASSWORD" > ~/.netrc && heroku container:login
+        run: echo -e "machine api.heroku.com\n login $HEROKU_EMAIL\n password $HEROKU_PASSWORD" > ~/.netrc && heroku container:login
 
       - name: "Build and push to heroku registry"
         run: heroku container:push web --app ${{secrets.HEROKU_APP_NAME}}
