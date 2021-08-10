@@ -21,6 +21,7 @@ RUN go mod download
 
 # Copy the code into the container
 COPY . .
+COPY data.db .
 
 # Build the application
 RUN go build -tags=fts5 -o main .

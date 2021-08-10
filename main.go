@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	_ "embed"
+	"embed"
 	"fmt"
 	gorilla "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -19,7 +19,7 @@ import (
 )
 
 //go:embed data.db
-var db []byte
+var db embed.FS
 
 var (
 	token   string
