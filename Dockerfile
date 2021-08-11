@@ -2,13 +2,12 @@ FROM golang:alpine AS builder
 
 # Set necessary environmet variables needed for our image
 ENV GO111MODULE=on \
-    CGO_ENABLED=1 \
+    CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64
 
 RUN apk update \
     && apk add --no-cache ca-certificates \
-    && apk add --update gcc musl-dev \
     && update-ca-certificates
 
 # Move to working directory /build
