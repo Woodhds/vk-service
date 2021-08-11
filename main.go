@@ -2,10 +2,9 @@ package main
 
 import (
 	"database/sql"
-	"embed"
 	"fmt"
 	"github.com/gorilla/mux"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/rs/cors"
 	"github.com/woodhds/vk.service/config"
 	"github.com/woodhds/vk.service/database"
@@ -16,9 +15,6 @@ import (
 	"net/http"
 	"os"
 )
-
-//go:embed data.db
-var db embed.FS
 
 var (
 	token   string
@@ -43,7 +39,7 @@ func main() {
 	log.Printf("Used version: %s", version)
 	log.Printf("Used count: %d", count)
 
-	conn, err := sql.Open("sqlite3", "./data.db")
+	conn, err := sql.Open("pgx", os.Getenv("DATABASE_URL"))
 
 	if err != nil {
 		log.Fatal(err)

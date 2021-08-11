@@ -24,12 +24,11 @@ func (m messageQueryService) GetMessages(search string) ([]*message.VkCategorize
 			       Owner, 
 			       messages.OwnerId,
 			       RepostsCount, 
-			       highlight(messages_search, 2, '<b><i><big>', '</big></i></b>') as Text, 
+			       messages.Text, 
 			       UserReposted
-			FROM messages inner join messages_search as search  on messages.Id = search.Id AND  messages.OwnerId = search.OwnerId 
-				where search.Text MATCH @search
-				order by rank desc
-				`, sql.Named("search", fmt.Sprintf(`"%s"`, search)))
+			FROM messages inner join messages_search as s on messages.Id = s.Id AND messages.OwnerId = s.OwnerId 
+				where s.Text @@ plainto_tsquery($1)
+				`,  fmt.Sprintf(`"%s"`, search))
 
 	if e != nil {
 		return nil, e

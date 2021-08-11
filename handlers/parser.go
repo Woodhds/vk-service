@@ -59,7 +59,7 @@ func ParserHandler(conn *sql.DB, token string, version string, count int, notifi
 
 			for m := range ch {
 				_, sqlErr := conn.Exec(`
-			insert or ignore into messages (Id, FromId, Date, Images, LikesCount, Owner, OwnerId, RepostsCount, Text, UserReposted) 
+			insert into messages (Id, FromId, Date, Images, LikesCount, Owner, OwnerId, RepostsCount, Text, UserReposted) 
 			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
 			ON CONFLICT(id, ownerId) DO UPDATE SET LikesCount=excluded.LikesCount, RepostsCount=excluded.RepostsCount, UserReposted=excluded.UserReposted`,
 					m.ID, m.FromID, time.Time(*m.Date), strings.Join(m.Images, ";"), m.LikesCount, m.Owner, m.OwnerID, m.RepostsCount, m.Text, m.UserReposted)

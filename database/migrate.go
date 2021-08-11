@@ -25,20 +25,21 @@ func Migrate(conn *sql.DB) {
 	log.Println("Created VkUserModel")
 
 	createUserStm = `
-	CREATE TABLE IF NOT EXISTS messages(
-		Id Integer,
-		FromId Integer,
-		Date DateTime,
-		Images TExt,
-		LikesCount integer,
-		Owner Text,
-		OwnerId Integer,
+	CREATE TABLE IF NOT EXISTS messages
+	(
+		Id           Integer,
+		FromId       Integer,
+		Date         Timestamp without time zone,
+		Images       TExt,
+		LikesCount   integer,
+		Owner        Text,
+		OwnerId      Integer,
 		RepostedFrom integer,
 		RepostsCount Integer,
 		UserReposted Boolean,
-		Text text,
-		Primary Key(Id, OwnerId) 
-		)`
+		Text         text,
+		Primary Key (Id, OwnerId)
+	)`
 	_, crecreateRes := conn.Exec(createUserStm)
 
 	if crecreateRes != nil {
@@ -48,7 +49,15 @@ func Migrate(conn *sql.DB) {
 	log.Println("Create Fulltext search table")
 
 	createUserStm = `
-	CREATE VIRTUAL TABLE IF NOT EXISTS messages_search USING fts5(Id, OwnerId, Text)
+	CREATE TABLE IF NOT EXISTS messages_search
+	(
+		Id      integer,
+		OwnerId integer,
+		Text    text,
+		FOREIGN KEY (Id, OwnerId) REFERENCES messages (id, OwnerId)
+	);
+	
+	CREATE INDEX IF NOT EXISTS idx_gin_messages_search on messages_search using gin(to_tsvector('russian', Text));
 	`
 
 	_, crecreateRes = conn.Exec(createUserStm)
@@ -61,10 +70,23 @@ func Migrate(conn *sql.DB) {
 
 	log.Println("Create on create trigger for full text search")
 	createUserStm = `
-	CREATE TRIGGER IF NOT EXISTS TR_messages_AI AFTER INSERT on messages
+	CREATE OR REPLACE FUNCTION insert_to_search_table()
+    RETURNS TRIGGER
+    LANGUAGE PLPGSQL
+	AS
+	$$
 	BEGIN
 		INSERT INTO messages_search (Id, OwnerId, Text) VALUES (new.Id, new.OwnerId, new.Text);
+	
+		RETURN NEW;
 	END;
+	$$;
+	
+	DROP TRIGGER IF EXISTS TR_messages_AI on messages;
+	
+	CREATE TRIGGER TR_messages_AI AFTER INSERT on messages
+		FOR EACH ROW
+	EXECUTE PROCEDURE insert_to_search_table();
 	`
 	_, crecreateRes = conn.Exec(createUserStm)
 
