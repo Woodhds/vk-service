@@ -26,7 +26,7 @@ func RepostHandler(conn *sql.DB, token string, version string) http.Handler {
 
 		for _, i := range data.Response.Items {
 			if e := wallClient.Repost(&message.VkRepostMessage{OwnerID: i.OwnerID, ID: i.ID}); e == nil {
-				if _, e := conn.Exec("UPDATE messages SET UserReposted = true where Id = ? and OwnerId = ?", i.ID, i.OwnerID); e != nil {
+				if _, e := conn.Exec("UPDATE messages SET UserReposted = true where Id = $1 and OwnerId = $2", i.ID, i.OwnerID); e != nil {
 					rw.WriteHeader(http.StatusBadRequest)
 					rw.Write([]byte(e.Error()))
 				}
