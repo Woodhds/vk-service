@@ -16,7 +16,7 @@ type messageQueryService struct {
 
 func (m messageQueryService) GetMessages(search string) ([]*message.VkCategorizedMessageModel, error) {
 	res, e := m.conn.Query(`
-			SELECT messages.Id, 
+			SELECT * FROM (SELECT messages.Id, 
 			       FromId, 
 			       Date, 
 			       Images, 
@@ -25,9 +25,11 @@ func (m messageQueryService) GetMessages(search string) ([]*message.VkCategorize
 			       messages.OwnerId,
 			       RepostsCount, 
 			       messages.Text, 
-			       UserReposted
+			       UserReposted,
+			        ts_rank(to_tsvector(s.Text), plainto_tsquery($1)) rank
 			FROM messages inner join messages_search as s on messages.Id = s.Id AND messages.OwnerId = s.OwnerId 
-				where s.Text @@ plainto_tsquery($1)
+				where s.Text @@ plainto_tsquery($1)) m
+				ORDER BY rank desc
 				`,  fmt.Sprintf(`"%s"`, search))
 
 	if e != nil {
