@@ -27,9 +27,9 @@ func (m messageQueryService) GetMessages(search string) ([]*message.VkCategorize
 			       messages.Text, 
 			       UserReposted
 			FROM messages inner join messages_search as s on messages.Id = s.Id AND messages.OwnerId = s.OwnerId 
-				where s.Text @@ plainto_tsquery($1)
-				order by ts_rank(to_tsvector(s.text), plainto_tsquery($1)) desc
-				`,  fmt.Sprintf(`"%s"`, search))
+				where s.Text @@ phraseto_tsquery($1)
+				order by ts_rank(to_tsvector(s.text), phraseto_tsquery($1)) desc
+				`,  search)
 
 	if e != nil {
 		return nil, e
