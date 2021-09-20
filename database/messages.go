@@ -23,7 +23,7 @@ func (m messageQueryService) GetMessages(search string) ([]*message.VkCategorize
 			       Owner, 
 			       messages.OwnerId,
 			       RepostsCount, 
-			       ts_headline(messages.text, phraseto_tsquery('18 августа'), 'HighlightAll = true') as Text,
+			       ts_headline(messages.text, phraseto_tsquery($1), 'HighlightAll = true') as Text,
 			       UserReposted
 			FROM messages inner join messages_search as s on messages.Id = s.Id AND messages.OwnerId = s.OwnerId 
 				where s.Text @@ phraseto_tsquery($1)
