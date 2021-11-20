@@ -5,18 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 )
-
-type PredictMessagePack struct {
-	Messages []*PredictMessage `json:"messages"`
-}
-
-type PredictMessagePackResponse struct {
-	Messages []*PredictMessage `json:"messages"`
-}
 
 type PredictMessage struct {
 	OwnerId  int    `json:"ownerId"`
@@ -74,7 +65,7 @@ func (c PredictorClient) SaveMessage(owner int, id int, text string, ownerName s
 }
 
 func (c PredictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage, error) {
-	b, _ := json.Marshal(PredictMessagePack{ Messages: messages })
+	b, _ := json.Marshal(messages)
 
 	if req, e := makeRequest(http.MethodPost, c.host, "predict", b); e == nil {
 		if resp, e := c.httpClient.Do(req); e != nil {
@@ -84,15 +75,12 @@ func (c PredictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage,
 				return messages, errors.New(fmt.Sprintf("Server responded with status %d", resp.StatusCode))
 			}
 
-			var respData PredictMessagePackResponse
+			var respData []*PredictMessage
 
-			e = json.NewDecoder(resp.Body).Decode(&respData)
-			if e != nil {
-				log.Print(e.Error())
-			}
+			json.NewDecoder(resp.Body).Decode(&respData)
 
 			for _, r := range messages {
-				for _, h := range respData.Messages {
+				for _, h := range respData {
 					if r.Id == h.Id && r.OwnerId == h.OwnerId {
 						r.Category = h.Category
 						r.IsAccept = h.IsAccept
