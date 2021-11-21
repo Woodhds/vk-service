@@ -17,6 +17,10 @@ type PredictMessage struct {
 	IsAccept bool   `json:"isAccept"`
 }
 
+type PredictMessageResponse struct {
+	Messages []*PredictMessage `json:"messages"`
+}
+
 type Predictor interface {
 	Predict(messages []*PredictMessage) ([]*PredictMessage, error)
 	SaveMessage(owner int, id int, text string, ownerName string, category string) error
@@ -75,12 +79,12 @@ func (c PredictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage,
 				return messages, errors.New(fmt.Sprintf("Server responded with status %d", resp.StatusCode))
 			}
 
-			var respData []*PredictMessage
+			var respData PredictMessageResponse
 
 			json.NewDecoder(resp.Body).Decode(&respData)
 
 			for _, r := range messages {
-				for _, h := range respData {
+				for _, h := range respData.Messages {
 					if r.Id == h.Id && r.OwnerId == h.OwnerId {
 						r.Category = h.Category
 						r.IsAccept = h.IsAccept
