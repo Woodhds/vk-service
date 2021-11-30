@@ -7,6 +7,7 @@ import (
 
 type MessagesQueryService interface {
 	GetMessages(search string) ([]*message.VkCategorizedMessageModel, error)
+	GetTotalCount() int
 }
 
 type messageQueryService struct {
@@ -48,6 +49,16 @@ func (m messageQueryService) GetMessages(search string) ([]*message.VkCategorize
 	defer res.Close()
 
 	return data, nil
+}
+
+func (m messageQueryService) GetTotalCount() int {
+	res := m.conn.QueryRow("select count(1) from messages")
+
+	count := 0
+
+	res.Scan(&count)
+
+	return count
 }
 
 func NewMessageQueryService(conn *sql.DB) MessagesQueryService {
