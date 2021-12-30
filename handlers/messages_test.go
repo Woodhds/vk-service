@@ -1,16 +1,17 @@
 package handlers
 
 import (
+	"testing"
+
 	"github.com/woodhds/vk.service/message"
 	"github.com/woodhds/vk.service/predictor"
-	"testing"
 )
 
 func BenchmarkMapCategoriesToMessages(t *testing.B) {
 	t.ReportAllocs()
-	data := make([]*VkCategorizedMessageModel, 110000)
+	data := make([]*message.VkCategorizedMessageModel, 110000)
 	for i := 0; i < 110000; i++ {
-		data[i] = &VkCategorizedMessageModel{
+		data[i] = &message.VkCategorizedMessageModel{
 			VkMessageModel: &message.VkMessageModel{
 				ID:      1,
 				OwnerID: 1,
@@ -18,7 +19,6 @@ func BenchmarkMapCategoriesToMessages(t *testing.B) {
 			Category: "test",
 		}
 	}
-
 
 	predictions := []*predictor.PredictMessage{{OwnerId: 1, Id: 1, Category: "Test", Text: "tt"}}
 	MapCategoriesToMessages(data, predictions)
@@ -28,5 +28,4 @@ func BenchmarkMapCategoriesToMessages(t *testing.B) {
 			t.Error("Category empty")
 		}
 	}
-
 }
