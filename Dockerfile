@@ -1,4 +1,4 @@
-FROM golang:1.17.0-alpine AS builder
+FROM golang:1.17.5-alpine AS builder
 
 # Set necessary environmet variables needed for our image
 ENV GO111MODULE=on \
@@ -31,7 +31,7 @@ WORKDIR /dist
 RUN cp /build/main .
 
 # Build a small image
-FROM alpine:3.14.1
+FROM alpine:3.15.0
 
 ENV PORT=8000 \
     HOST="" \

@@ -4,16 +4,17 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/woodhds/vk.service/message"
-	"github.com/woodhds/vk.service/notifier"
-	"github.com/woodhds/vk.service/vkclient"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/woodhds/vk.service/message"
+	"github.com/woodhds/vk.service/notifier"
+	"github.com/woodhds/vk.service/vkclient"
 )
 
 func ParserHandler(conn *sql.DB, token string, version string, count int, notifier *notifier.NotifyService) http.Handler {
@@ -61,7 +62,7 @@ func ParserHandler(conn *sql.DB, token string, version string, count int, notifi
 				_, sqlErr := conn.Exec(`
 			insert into messages (Id, FromId, Date, Images, LikesCount, Owner, OwnerId, RepostsCount, Text, UserReposted) 
 			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
-			ON CONFLICT(id, ownerId) DO UPDATE SET LikesCount=excluded.LikesCount, RepostsCount=excluded.RepostsCount, UserReposted=excluded.UserReposted`,
+			ON CONFLICT(id, ownerId) DO UPDATE SET LikesCount=excluded.LikesCount, RepostsCount=excluded.RepostsCount, UserReposted=excluded.UserReposted, Images=excluded.Images`,
 					m.ID, m.FromID, time.Time(*m.Date), strings.Join(m.Images, ";"), m.LikesCount, m.Owner, m.OwnerID, m.RepostsCount, m.Text, m.UserReposted)
 
 				if sqlErr != nil {

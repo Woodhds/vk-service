@@ -44,7 +44,7 @@ func (n *NotifyService) Listen() {
 
 			// We got a new event from the outside!
 			// Send event to all connected clients
-			for clientMessageChan, _ := range n.clients {
+			for clientMessageChan := range n.clients {
 				clientMessageChan <- event
 			}
 		}
