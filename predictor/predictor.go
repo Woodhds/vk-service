@@ -24,6 +24,7 @@ type PredictMessageResponse struct {
 type Predictor interface {
 	Predict(messages []*PredictMessage) ([]*PredictMessage, error)
 	SaveMessage(owner int, id int, text string, ownerName string, category string) error
+	PredictMessage(message *PredictMessage) (map[string]float32, error)
 }
 
 type SavePredictRequest struct {
@@ -99,6 +100,28 @@ func (c PredictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage,
 	}
 
 	return messages, nil
+}
+
+func (c *PredictorClient) PredictMessage(message *PredictMessage) (map[string]float32, error) {
+	b, _ := json.Marshal(message.Text)
+	if req, e := makeRequest(http.MethodPost, c.host, fmt.Sprintf("predict/%d/%d", message.OwnerId, message.Id), b); e == nil {
+		if resp, e := c.httpClient.Do(req); e != nil {
+			return make(map[string]float32), e
+		} else {
+			if resp.StatusCode != http.StatusOK {
+				return make(map[string]float32), errors.New(fmt.Sprintf("Server responded with status %d", resp.StatusCode))
+			}
+
+			var respData map[string]float32
+
+			json.NewDecoder(resp.Body).Decode(&respData)
+
+			return respData, nil
+		}
+
+	} else {
+		return nil, e
+	}
 }
 
 func NewClient(host string) (Predictor, error) {
