@@ -103,7 +103,7 @@ func (c PredictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage,
 }
 
 func (c *PredictorClient) PredictMessage(message *PredictMessage) (map[string]float32, error) {
-	b, _ := json.Marshal(message.Text)
+	b := []byte(message.Text)
 	if req, e := makeRequest(http.MethodPost, c.host, fmt.Sprintf("predict/%d/%d", message.OwnerId, message.Id), b); e == nil {
 		if resp, e := c.httpClient.Do(req); e != nil {
 			return make(map[string]float32), e
