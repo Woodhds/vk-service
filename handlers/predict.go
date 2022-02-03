@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/woodhds/vk.service/predictor"
+	"io"
 	"net/http"
 	"strconv"
 )
@@ -21,8 +21,8 @@ func PredictHandler(predictorClient predictor.Predictor) http.Handler {
 			messageId = id
 		}
 
-		var text string
-		json.NewDecoder(r.Body).Decode(&text)
+		bodyBytes, _ := io.ReadAll(r.Body)
+		text := string(bodyBytes)
 
 		resp, e := predictorClient.PredictMessage(&predictor.PredictMessage{OwnerId: owner, Id: messageId, Text: text})
 
