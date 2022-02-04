@@ -10,11 +10,12 @@ import (
 )
 
 type PredictMessage struct {
-	OwnerId  int    `json:"ownerId"`
-	Id       int    `json:"id"`
-	Category string `json:"category"`
-	Text     string `json:"text"`
-	IsAccept bool   `json:"isAccept"`
+	OwnerId  int                `json:"ownerId"`
+	Id       int                `json:"id"`
+	Category string             `json:"category"`
+	Text     string             `json:"text"`
+	IsAccept bool               `json:"isAccept"`
+	Scores   map[string]float32 `json:"scores"`
 }
 
 type PredictMessageResponse struct {
@@ -89,6 +90,7 @@ func (c PredictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage,
 					if r.Id == h.Id && r.OwnerId == h.OwnerId {
 						r.Category = h.Category
 						r.IsAccept = h.IsAccept
+						r.Scores = h.Scores
 						break
 					}
 				}

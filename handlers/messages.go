@@ -46,6 +46,7 @@ func MapCategoriesToMessages(data []*message.VkCategorizedMessageModel, predicti
 			if predictions[j].Id == data[i].ID && data[i].OwnerID == predictions[j].OwnerId {
 				data[i].Category = predictions[j].Category
 				data[i].IsAccept = predictions[j].IsAccept
+				data[i].Scores = predictions[j].Scores
 				break
 			}
 		}
