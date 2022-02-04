@@ -18,6 +18,12 @@ type VkCategorizedMessageModel struct {
 	IsAccept bool   `json:"isAccept"`
 }
 
+type SimpleMessageModel struct {
+	OwnerID int    `json:"ownerId"`
+	ID      int    `json:"id"`
+	Text    string `json:"text"`
+}
+
 type VkWallResponse struct {
 	Response struct {
 		Items []struct {

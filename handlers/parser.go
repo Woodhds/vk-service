@@ -17,7 +17,7 @@ import (
 	"github.com/woodhds/vk.service/vkclient"
 )
 
-func ParserHandler(conn *sql.DB, token string, version string, count int, notifier *notifier.NotifyService) http.Handler {
+func ParserHandler(conn *sql.DB, wallClient vkclient.WallClient, count int, notifier *notifier.NotifyService) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		defer func() {
 			notifier.Success("Grab start")
@@ -40,8 +40,6 @@ func ParserHandler(conn *sql.DB, token string, version string, count int, notifi
 		postsCh := make(chan []*message.VkRepostMessage, 10)
 
 		ch := make(chan *message.VkMessageModel)
-
-		wallClient, _ := vkclient.NewWallClient(token, version)
 
 		go func() {
 			for reposts := range postsCh {
@@ -88,7 +86,7 @@ func ParserHandler(conn *sql.DB, token string, version string, count int, notifi
 	})
 }
 
-func getMessages(id int, page int, count int, wallClient *vkclient.WallClient, postsCh chan []*message.VkRepostMessage) {
+func getMessages(id int, page int, count int, wallClient vkclient.WallClient, postsCh chan []*message.VkRepostMessage) {
 
 	data, e := wallClient.Get(&vkclient.WallGetRequest{OwnerId: id, Offset: (page - 1) * count, Count: count})
 

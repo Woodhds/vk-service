@@ -7,6 +7,7 @@ import (
 
 type MessagesQueryService interface {
 	GetMessages(search string) ([]*message.VkCategorizedMessageModel, error)
+	GetMessageById(ownerId int, id int) *message.SimpleMessageModel
 }
 
 type messageQueryService struct {
@@ -28,7 +29,7 @@ func (m messageQueryService) GetMessages(search string) ([]*message.VkCategorize
 			FROM messages inner join messages_search as s on messages.Id = s.Id AND messages.OwnerId = s.OwnerId 
 				where s.Text @@ phraseto_tsquery($1)
 				order by ts_rank(to_tsvector(s.text), phraseto_tsquery($1)) desc
-				`,  search)
+				`, search)
 
 	if e != nil {
 		return nil, e
@@ -48,6 +49,20 @@ func (m messageQueryService) GetMessages(search string) ([]*message.VkCategorize
 	defer res.Close()
 
 	return data, nil
+}
+
+func (m messageQueryService) GetMessageById(ownerId int, id int) *message.SimpleMessageModel {
+	res := m.conn.QueryRow(`SELECT messages.Id,
+			       OwnerId,
+			       messages.text as Text
+				FROM messages where OwnerId = $1 AND Id = $2`, ownerId, id)
+
+	if res == nil {
+		return nil
+	}
+	var data message.SimpleMessageModel
+	res.Scan(&data.ID, &data.OwnerID, &data.Text)
+	return &data
 }
 
 func NewMessageQueryService(conn *sql.DB) MessagesQueryService {

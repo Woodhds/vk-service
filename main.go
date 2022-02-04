@@ -11,6 +11,7 @@ import (
 	"github.com/woodhds/vk.service/handlers"
 	"github.com/woodhds/vk.service/notifier"
 	"github.com/woodhds/vk.service/predictor"
+	"github.com/woodhds/vk.service/vkclient"
 	"log"
 	"net/http"
 	"os"
@@ -49,6 +50,7 @@ func main() {
 	predictorClient, _ := predictor.NewClient(host)
 	notifyService := notifier.NewNotifyService()
 	messageQueryService := database.NewMessageQueryService(conn)
+	wallClient, _ := vkclient.NewWallClient(token, version)
 
 	defer conn.Close()
 
@@ -60,7 +62,7 @@ func main() {
 	r.Path("/messages").Handler(handlers.MessagesHandler(messageQueryService, predictorClient)).Methods(http.MethodGet)
 	r.Path("/like").Handler(handlers.LikeHandler(notifyService)).Methods(http.MethodPost)
 
-	r.Path("/grab").Handler(handlers.ParserHandler(conn, token, version, count, notifyService)).Methods(http.MethodGet)
+	r.Path("/grab").Handler(handlers.ParserHandler(conn, wallClient, count, notifyService)).Methods(http.MethodGet)
 
 	r.Path("/users").Handler(handlers.UsersHandler(conn)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
 
@@ -69,7 +71,7 @@ func main() {
 	r.Path("/users/search").Handler(handlers.UsersSearchHandler(token, version)).Methods(http.MethodGet, http.MethodOptions)
 	r.Path("/messages/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(predictorClient, conn)).Methods(http.MethodPost)
 	r.Path("/notifications").Handler(notifier.NotificationHandler(notifyService)).Methods(http.MethodGet)
-	r.Path("/predict/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.PredictHandler(predictorClient)).Methods(http.MethodPost)
+	r.Path("/predict/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.PredictHandler(predictorClient, messageQueryService, wallClient)).Methods(http.MethodPost)
 
 	fmt.Println(http.ListenAndServe(fmt.Sprintf(":%d", port), cors.Default().Handler(r)))
 }
