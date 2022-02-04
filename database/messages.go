@@ -61,7 +61,9 @@ func (m messageQueryService) GetMessageById(ownerId int, id int) *message.Simple
 		return nil
 	}
 	var data message.SimpleMessageModel
-	res.Scan(&data.ID, &data.OwnerID, &data.Text)
+	if e:= res.Scan(&data.ID, &data.OwnerID, &data.Text); e != nil {
+		return nil
+	}
 	return &data
 }
 

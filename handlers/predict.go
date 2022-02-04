@@ -39,7 +39,7 @@ func PredictHandler(predictorClient predictor.Predictor, db database.MessagesQue
 			return
 		}
 
-		result := map[string]interface{} { "message": mes, "predict": resp }
+		result := map[string]interface{}{"message": mes, "predict": resp}
 
 		Json(rw, result)
 	})
