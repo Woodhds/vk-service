@@ -1,7 +1,6 @@
 package database
 
 import (
-	"database/sql"
 	"github.com/woodhds/vk.service/message"
 )
 
@@ -11,11 +10,13 @@ type MessagesQueryService interface {
 }
 
 type messageQueryService struct {
-	conn *sql.DB
+	factory ConnectionFactory
 }
 
 func (m messageQueryService) GetMessages(search string) ([]*message.VkCategorizedMessageModel, error) {
-	res, e := m.conn.Query(`
+	conn, _ := m.factory.GetConnection()
+
+	res, e := conn.Query(`
 			SELECT messages.Id, 
 			       FromId, 
 			       Date, 
@@ -52,7 +53,8 @@ func (m messageQueryService) GetMessages(search string) ([]*message.VkCategorize
 }
 
 func (m messageQueryService) GetMessageById(ownerId int, id int) *message.SimpleMessageModel {
-	res := m.conn.QueryRow(`SELECT messages.Id,
+	conn, _ := m.factory.GetConnection();
+	res := conn.QueryRow(`SELECT messages.Id,
 			       OwnerId,
 			       messages.text as Text
 				FROM messages where OwnerId = $1 AND Id = $2`, ownerId, id)
@@ -61,14 +63,14 @@ func (m messageQueryService) GetMessageById(ownerId int, id int) *message.Simple
 		return nil
 	}
 	var data message.SimpleMessageModel
-	if e:= res.Scan(&data.ID, &data.OwnerID, &data.Text); e != nil {
+	if e := res.Scan(&data.ID, &data.OwnerID, &data.Text); e != nil {
 		return nil
 	}
 	return &data
 }
 
-func NewMessageQueryService(conn *sql.DB) MessagesQueryService {
+func NewMessageQueryService(conn ConnectionFactory) MessagesQueryService {
 	return &messageQueryService{
-		conn: conn,
+		factory: conn,
 	}
 }

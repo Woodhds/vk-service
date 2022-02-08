@@ -1,10 +1,8 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
-	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/rs/cors"
 	"github.com/woodhds/vk.service/config"
 	"github.com/woodhds/vk.service/database"
@@ -40,7 +38,8 @@ func main() {
 	log.Printf("Used version: %s", version)
 	log.Printf("Used count: %d", count)
 
-	conn, err := sql.Open("pgx", os.Getenv("DATABASE_URL"))
+	connectionString := os.Getenv("DATABASE_URL")
+	factory, err := database.NewConnectionFactory(&connectionString)
 
 	if err != nil {
 		log.Fatal(err)
@@ -49,12 +48,16 @@ func main() {
 
 	predictorClient, _ := predictor.NewClient(host)
 	notifyService := notifier.NewNotifyService()
-	messageQueryService := database.NewMessageQueryService(conn)
+	messageQueryService := database.NewMessageQueryService(factory)
 	wallClient, _ := vkclient.NewWallClient(token, version)
 
-	defer conn.Close()
+	conn, _ := factory.GetConnection()
 
 	database.Migrate(conn)
+
+	if e := conn.Close(); e != nil {
+		log.Println(e)
+	}
 
 	router := mux.NewRouter()
 	r := router.PathPrefix("/api").Subrouter()
@@ -62,14 +65,14 @@ func main() {
 	r.Path("/messages").Handler(handlers.MessagesHandler(messageQueryService, predictorClient)).Methods(http.MethodGet)
 	r.Path("/like").Handler(handlers.LikeHandler(notifyService)).Methods(http.MethodPost)
 
-	r.Path("/grab").Handler(handlers.ParserHandler(conn, wallClient, count, notifyService)).Methods(http.MethodGet)
+	r.Path("/grab").Handler(handlers.ParserHandler(factory, wallClient, count, notifyService)).Methods(http.MethodGet)
 
-	r.Path("/users").Handler(handlers.UsersHandler(conn)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
+	r.Path("/users").Handler(handlers.UsersHandler(factory)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
 
-	r.Path("/repost").Handler(handlers.RepostHandler(conn, token, version)).Methods(http.MethodPost, http.MethodOptions)
+	r.Path("/repost").Handler(handlers.RepostHandler(factory, token, version)).Methods(http.MethodPost, http.MethodOptions)
 
 	r.Path("/users/search").Handler(handlers.UsersSearchHandler(token, version)).Methods(http.MethodGet, http.MethodOptions)
-	r.Path("/messages/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(predictorClient, conn)).Methods(http.MethodPost)
+	r.Path("/messages/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(predictorClient, factory)).Methods(http.MethodPost)
 	r.Path("/notifications").Handler(notifier.NotificationHandler(notifyService)).Methods(http.MethodGet)
 	r.Path("/predict/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.PredictHandler(predictorClient, messageQueryService, wallClient)).Methods(http.MethodPost)
 

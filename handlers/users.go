@@ -1,15 +1,17 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/woodhds/vk.service/database"
 	"github.com/woodhds/vk.service/vkclient"
 	"net/http"
 )
 
-func UsersHandler(conn *sql.DB) http.Handler {
+func UsersHandler(factory database.ConnectionFactory) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		conn, _ := factory.GetConnection()
+
 		if r.Method == http.MethodGet {
 			if rows, e := conn.Query(`SELECT Id, coalesce(Name, '') as Name, coalesce(Avatar,'') as Avatar from VkUserModel`); e != nil {
 				rw.WriteHeader(http.StatusBadRequest)

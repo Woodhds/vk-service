@@ -1,15 +1,15 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"github.com/woodhds/vk.service/database"
 	"github.com/woodhds/vk.service/predictor"
 	"net/http"
 	"strconv"
 )
 
-func MessageSaveHandler(predict predictor.Predictor, conn *sql.DB) http.Handler {
+func MessageSaveHandler(predict predictor.Predictor, factory database.ConnectionFactory) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		var owner int
@@ -31,9 +31,11 @@ func MessageSaveHandler(predict predictor.Predictor, conn *sql.DB) http.Handler 
 		}
 
 		var message struct {
-			text string
+			text  string
 			owner string
 		}
+
+		conn, _ := factory.GetConnection()
 
 		if d, e := conn.Query("SELECT Text, Owner from messages where OwnerId = $1 and Id = $2", owner, messageId); e != nil {
 			rw.WriteHeader(http.StatusBadRequest)

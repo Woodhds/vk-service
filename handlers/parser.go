@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"crypto/tls"
-	"database/sql"
 	"fmt"
+	"github.com/woodhds/vk.service/database"
 	"log"
 	"net/http"
 	"net/url"
@@ -17,11 +17,13 @@ import (
 	"github.com/woodhds/vk.service/vkclient"
 )
 
-func ParserHandler(conn *sql.DB, wallClient vkclient.WallClient, count int, notifier *notifier.NotifyService) http.Handler {
+func ParserHandler(factory database.ConnectionFactory, wallClient vkclient.WallClient, count int, notifier *notifier.NotifyService) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		defer func() {
 			notifier.Success("Grab start")
 		}()
+
+		conn, _ := factory.GetConnection()
 
 		rows, _ := conn.Query(`select Id from VkUserModel`)
 		var err error
