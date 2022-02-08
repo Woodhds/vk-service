@@ -10,6 +10,11 @@ import (
 	"strconv"
 )
 
+type PredictResponse struct {
+	Message *message.SimpleMessageModel `json:"message"`
+	Predict *map[string]float32         `json:"predict"`
+}
+
 func PredictHandler(predictorClient predictor.Predictor, db database.MessagesQueryService, client vkclient.WallClient) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -39,7 +44,7 @@ func PredictHandler(predictorClient predictor.Predictor, db database.MessagesQue
 			return
 		}
 
-		result := map[string]interface{}{"message": mes, "predict": resp}
+		result := &PredictResponse{Message: mes, Predict: &resp}
 
 		Json(rw, result)
 	})

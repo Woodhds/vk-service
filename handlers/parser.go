@@ -45,11 +45,13 @@ func ParserHandler(factory database.ConnectionFactory, wallClient vkclient.WallC
 
 		go func() {
 			conn, _ := factory.GetConnection(context.Background())
-			for m := range ch {
-				_, sqlErr := conn.ExecContext(context.Background(), `
+			statement, _ := conn.PrepareContext(context.Background(), `
 			insert into messages (Id, FromId, Date, Images, LikesCount, Owner, OwnerId, RepostsCount, Text, UserReposted) 
 			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
-			ON CONFLICT(id, ownerId) DO UPDATE SET LikesCount=excluded.LikesCount, RepostsCount=excluded.RepostsCount, UserReposted=excluded.UserReposted, Images=excluded.Images`,
+			ON CONFLICT(id, ownerId) DO UPDATE SET LikesCount=excluded.LikesCount, RepostsCount=excluded.RepostsCount, UserReposted=excluded.UserReposted, Images=excluded.Images`)
+
+			for m := range ch {
+				_, sqlErr := statement.ExecContext(context.Background(),
 					m.ID, m.FromID, time.Time(*m.Date), strings.Join(m.Images, ";"), m.LikesCount, m.Owner, m.OwnerID, m.RepostsCount, m.Text, m.UserReposted)
 
 				if sqlErr != nil {

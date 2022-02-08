@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -52,7 +53,7 @@ func main() {
 	wallClient, _ := vkclient.NewWallClient(token, version)
 	usersQueryService, _ := database.NewUserQueryService(factory)
 
-	conn, _ := factory.GetConnection()
+	conn, _ := factory.GetConnection(context.Background())
 
 	database.Migrate(conn)
 
@@ -68,7 +69,7 @@ func main() {
 
 	r.Path("/grab").Handler(handlers.ParserHandler(factory, wallClient, count, notifyService, usersQueryService)).Methods(http.MethodGet)
 
-	r.Path("/users").Handler(handlers.UsersHandler(factory)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
+	r.Path("/users").Handler(handlers.UsersHandler(usersQueryService)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
 
 	r.Path("/repost").Handler(handlers.RepostHandler(factory, token, version)).Methods(http.MethodPost, http.MethodOptions)
 
