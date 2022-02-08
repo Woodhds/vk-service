@@ -2,36 +2,20 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/woodhds/vk.service/database"
 	"github.com/woodhds/vk.service/vkclient"
 	"net/http"
 )
 
-func UsersHandler(factory database.ConnectionFactory) http.Handler {
+func UsersHandler(usersService database.UsersQueryService) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		conn, _ := factory.GetConnection()
-
 		if r.Method == http.MethodGet {
-			if rows, e := conn.Query(`SELECT Id, coalesce(Name, '') as Name, coalesce(Avatar,'') as Avatar from VkUserModel`); e != nil {
+			if rows, e := usersService.GetFullUsers(r.Context()); e != nil {
 				rw.WriteHeader(http.StatusBadRequest)
 				return
 			} else {
-				defer rows.Close()
 
-				var res []vkclient.VkUserMdodel
-
-				for rows.Next() {
-					u := vkclient.VkUserMdodel{}
-					if e := rows.Scan(&u.Id, &u.Name, &u.Avatar); e == nil {
-						res = append(res, u)
-					} else {
-						fmt.Println(e)
-					}
-
-				}
-
-				Json(rw, res)
+				Json(rw, rows)
 			}
 		}
 
@@ -44,9 +28,7 @@ func UsersHandler(factory database.ConnectionFactory) http.Handler {
 				return
 			}
 
-			_, e := conn.Exec(`INSERT INTO VkUserModel (Id, Avatar, Name) VALUES ($1, $2, $3)`, u.Id, u.Avatar, u.Name)
-
-			if e != nil {
+			if e := usersService.InsertNew(u.Id, u.Name, u.Avatar, r.Context()); e != nil {
 				rw.WriteHeader(http.StatusBadRequest)
 			}
 		}

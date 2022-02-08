@@ -1,11 +1,12 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"log"
 )
 
-func Migrate(conn *sql.DB) {
+func Migrate(conn *sql.Conn) {
 	log.Println("Start Migrate")
 	createUserStm := `CREATE TABLE IF NOT EXISTS VkUserModel 
 	(
@@ -17,7 +18,7 @@ func Migrate(conn *sql.DB) {
 	`
 	log.Println("Create VkUserModel")
 	log.Println(createUserStm)
-	_, createRes := conn.Exec(createUserStm)
+	_, createRes := conn.ExecContext(context.Background(), createUserStm)
 	if createRes != nil {
 		log.Fatal(createRes)
 	}
@@ -40,7 +41,7 @@ func Migrate(conn *sql.DB) {
 		Text         text,
 		Primary Key (Id, OwnerId)
 	)`
-	_, crecreateRes := conn.Exec(createUserStm)
+	_, crecreateRes := conn.ExecContext(context.Background(), createUserStm)
 
 	if crecreateRes != nil {
 		log.Fatal(createRes)
@@ -60,7 +61,7 @@ func Migrate(conn *sql.DB) {
 	CREATE INDEX IF NOT EXISTS idx_gin_messages_search on messages_search using gin(to_tsvector('russian', Text));
 	`
 
-	_, crecreateRes = conn.Exec(createUserStm)
+	_, crecreateRes = conn.ExecContext(context.Background(), createUserStm)
 
 	if crecreateRes != nil {
 		log.Fatal("Error occured during creating virtual table: ", createUserStm)
@@ -88,7 +89,7 @@ func Migrate(conn *sql.DB) {
 		FOR EACH ROW
 	EXECUTE PROCEDURE insert_to_search_table();
 	`
-	_, crecreateRes = conn.Exec(createUserStm)
+	_, crecreateRes = conn.ExecContext(context.Background(), createUserStm)
 
 	if crecreateRes != nil {
 		log.Fatalln("Error creating TRIGGER on message: ", crecreateRes)

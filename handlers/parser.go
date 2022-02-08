@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"github.com/woodhds/vk.service/database"
@@ -17,27 +18,13 @@ import (
 	"github.com/woodhds/vk.service/vkclient"
 )
 
-func ParserHandler(factory database.ConnectionFactory, wallClient vkclient.WallClient, count int, notifier *notifier.NotifyService) http.Handler {
+func ParserHandler(factory database.ConnectionFactory, wallClient vkclient.WallClient, count int, notifier *notifier.NotifyService, userQueryService database.UsersQueryService) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		defer func() {
 			notifier.Success("Grab start")
 		}()
 
-		conn, _ := factory.GetConnection()
-
-		rows, _ := conn.Query(`select Id from VkUserModel`)
-		var err error
-
-		var ids []int
-		for rows.Next() {
-			var id int
-			err = rows.Scan(&id)
-			if err == nil {
-				ids = append(ids, id)
-			}
-		}
-
-		rows.Close()
+		ids, _ := userQueryService.GetAll()
 
 		postsCh := make(chan []*message.VkRepostMessage, 10)
 
@@ -57,9 +44,9 @@ func ParserHandler(factory database.ConnectionFactory, wallClient vkclient.WallC
 		}()
 
 		go func() {
-
+			conn, _ := factory.GetConnection(context.Background())
 			for m := range ch {
-				_, sqlErr := conn.Exec(`
+				_, sqlErr := conn.ExecContext(context.Background(), `
 			insert into messages (Id, FromId, Date, Images, LikesCount, Owner, OwnerId, RepostsCount, Text, UserReposted) 
 			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
 			ON CONFLICT(id, ownerId) DO UPDATE SET LikesCount=excluded.LikesCount, RepostsCount=excluded.RepostsCount, UserReposted=excluded.UserReposted, Images=excluded.Images`,
@@ -74,9 +61,6 @@ func ParserHandler(factory database.ConnectionFactory, wallClient vkclient.WallC
 		for _, id := range ids {
 			for i := 1; i <= 4; i++ {
 				go getMessages(id, i, count, wallClient, postsCh)
-				if err != nil {
-					fmt.Println(err)
-				}
 			}
 		}
 

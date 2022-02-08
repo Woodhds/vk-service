@@ -50,6 +50,7 @@ func main() {
 	notifyService := notifier.NewNotifyService()
 	messageQueryService := database.NewMessageQueryService(factory)
 	wallClient, _ := vkclient.NewWallClient(token, version)
+	usersQueryService, _ := database.NewUserQueryService(factory)
 
 	conn, _ := factory.GetConnection()
 
@@ -65,7 +66,7 @@ func main() {
 	r.Path("/messages").Handler(handlers.MessagesHandler(messageQueryService, predictorClient)).Methods(http.MethodGet)
 	r.Path("/like").Handler(handlers.LikeHandler(notifyService)).Methods(http.MethodPost)
 
-	r.Path("/grab").Handler(handlers.ParserHandler(factory, wallClient, count, notifyService)).Methods(http.MethodGet)
+	r.Path("/grab").Handler(handlers.ParserHandler(factory, wallClient, count, notifyService, usersQueryService)).Methods(http.MethodGet)
 
 	r.Path("/users").Handler(handlers.UsersHandler(factory)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
 

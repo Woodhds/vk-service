@@ -35,9 +35,9 @@ func MessageSaveHandler(predict predictor.Predictor, factory database.Connection
 			owner string
 		}
 
-		conn, _ := factory.GetConnection()
+		conn, _ := factory.GetConnection(r.Context())
 
-		if d, e := conn.Query("SELECT Text, Owner from messages where OwnerId = $1 and Id = $2", owner, messageId); e != nil {
+		if d, e := conn.QueryContext(r.Context(),"SELECT Text, Owner from messages where OwnerId = $1 and Id = $2", owner, messageId); e != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		} else {

@@ -1,11 +1,12 @@
 package database
 
 import (
+	"context"
 	"github.com/woodhds/vk.service/message"
 )
 
 type MessagesQueryService interface {
-	GetMessages(search string) ([]*message.VkCategorizedMessageModel, error)
+	GetMessages(search string, ctx context.Context) ([]*message.VkCategorizedMessageModel, error)
 	GetMessageById(ownerId int, id int) *message.SimpleMessageModel
 }
 
@@ -13,24 +14,25 @@ type messageQueryService struct {
 	factory ConnectionFactory
 }
 
-func (m messageQueryService) GetMessages(search string) ([]*message.VkCategorizedMessageModel, error) {
-	conn, _ := m.factory.GetConnection()
+func (m messageQueryService) GetMessages(search string, ctx context.Context) ([]*message.VkCategorizedMessageModel, error) {
+	conn, _ := m.factory.GetConnection(ctx)
+	defer conn.Close()
 
-	res, e := conn.Query(`
-			SELECT messages.Id, 
-			       FromId, 
-			       Date, 
-			       Images, 
-			       LikesCount, 
-			       Owner, 
+	stm, _ := conn.PrepareContext(ctx, `SELECT messages.Id,
+			       FromId,
+			       Date,
+			       Images,
+			       LikesCount,
+			       Owner,
 			       messages.OwnerId,
-			       RepostsCount, 
+			       RepostsCount,
 			       ts_headline(messages.text, phraseto_tsquery($1), 'HighlightAll = true') as Text,
 			       UserReposted
-			FROM messages inner join messages_search as s on messages.Id = s.Id AND messages.OwnerId = s.OwnerId 
+			FROM messages inner join messages_search as s on messages.Id = s.Id AND messages.OwnerId = s.OwnerId
 				where s.Text @@ phraseto_tsquery($1)
-				order by ts_rank(to_tsvector(s.text), phraseto_tsquery($1)) desc
-				`, search)
+				order by ts_rank(to_tsvector(s.text), phraseto_tsquery($1)) desc`)
+
+	res, e := stm.QueryContext(ctx, search)
 
 	if e != nil {
 		return nil, e
@@ -53,8 +55,9 @@ func (m messageQueryService) GetMessages(search string) ([]*message.VkCategorize
 }
 
 func (m messageQueryService) GetMessageById(ownerId int, id int) *message.SimpleMessageModel {
-	conn, _ := m.factory.GetConnection();
-	res := conn.QueryRow(`SELECT messages.Id,
+	conn, _ := m.factory.GetConnection(context.Background())
+	defer conn.Close()
+	res := conn.QueryRowContext(context.Background(), `SELECT messages.Id,
 			       OwnerId,
 			       messages.text as Text
 				FROM messages where OwnerId = $1 AND Id = $2`, ownerId, id)

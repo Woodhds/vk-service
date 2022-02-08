@@ -11,7 +11,7 @@ func MessagesHandler(messageQueryService database.MessagesQueryService, predicto
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		search := r.URL.Query().Get("search")
 
-		data, e := messageQueryService.GetMessages(search)
+		data, e := messageQueryService.GetMessages(search, r.Context())
 
 		if e != nil {
 			rw.WriteHeader(http.StatusBadRequest)

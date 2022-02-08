@@ -40,12 +40,12 @@ type saveRequest struct {
 	OwnerName string `json:"ownerName"`
 }
 
-type PredictorClient struct {
+type predictorClient struct {
 	httpClient *http.Client
 	host       string
 }
 
-func (c PredictorClient) SaveMessage(owner int, id int, text string, ownerName string, category string) error {
+func (c predictorClient) SaveMessage(owner int, id int, text string, ownerName string, category string) error {
 	reqData := &saveRequest{
 		OwnerId:   owner,
 		Id:        id,
@@ -70,7 +70,7 @@ func (c PredictorClient) SaveMessage(owner int, id int, text string, ownerName s
 	return nil
 }
 
-func (c PredictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage, error) {
+func (c predictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage, error) {
 	b, _ := json.Marshal(messages)
 
 	if req, e := makeRequest(http.MethodPost, c.host, "predict", b); e == nil {
@@ -104,7 +104,7 @@ func (c PredictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage,
 	return messages, nil
 }
 
-func (c *PredictorClient) PredictMessage(message *PredictMessage) (map[string]float32, error) {
+func (c *predictorClient) PredictMessage(message *PredictMessage) (map[string]float32, error) {
 	d := map[string]string{"text": message.Text}
 	b, _ := json.Marshal(d)
 	if req, e := makeRequest(http.MethodPost, c.host, fmt.Sprintf("predict/%d/%d", message.OwnerId, message.Id), b); e == nil {
@@ -128,7 +128,7 @@ func (c *PredictorClient) PredictMessage(message *PredictMessage) (map[string]fl
 }
 
 func NewClient(host string) (Predictor, error) {
-	return &PredictorClient{
+	return &predictorClient{
 		httpClient: &http.Client{},
 		host:       host,
 	}, nil
