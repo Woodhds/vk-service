@@ -28,6 +28,7 @@ type SimpleMessageModel struct {
 type VkWallResponse struct {
 	Response struct {
 		Items []struct {
+			*VkMessage
 			CopyHistory []struct {
 				OwnerID int `json:"owner_id"`
 				ID      int `json:"id"`

@@ -52,6 +52,7 @@ func main() {
 	messageQueryService := database.NewMessageQueryService(factory)
 	wallClient, _ := vkclient.NewWallClient(token, version)
 	usersQueryService, _ := database.NewUserQueryService(factory)
+	messagesService := handlers.NewMessageService(wallClient)
 
 	conn, _ := factory.GetConnection(context.Background())
 
@@ -67,7 +68,7 @@ func main() {
 	r.Path("/messages").Handler(handlers.MessagesHandler(messageQueryService, predictorClient)).Methods(http.MethodGet)
 	r.Path("/like").Handler(handlers.LikeHandler(notifyService)).Methods(http.MethodPost)
 
-	r.Path("/grab").Handler(handlers.ParserHandler(factory, wallClient, count, notifyService, usersQueryService)).Methods(http.MethodGet)
+	r.Path("/grab").Handler(handlers.ParserHandler(factory, messagesService, count, notifyService, usersQueryService)).Methods(http.MethodGet)
 
 	r.Path("/users").Handler(handlers.UsersHandler(usersQueryService)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
 
@@ -76,7 +77,7 @@ func main() {
 	r.Path("/users/search").Handler(handlers.UsersSearchHandler(token, version)).Methods(http.MethodGet, http.MethodOptions)
 	r.Path("/messages/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(predictorClient, factory)).Methods(http.MethodPost)
 	r.Path("/notifications").Handler(notifier.NotificationHandler(notifyService)).Methods(http.MethodGet)
-	r.Path("/predict/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.PredictHandler(predictorClient, messageQueryService, wallClient)).Methods(http.MethodPost)
+	r.Path("/predict/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.PredictHandler(predictorClient, wallClient)).Methods(http.MethodPost)
 
 	fmt.Println(http.ListenAndServe(fmt.Sprintf(":%d", port), cors.Default().Handler(r)))
 }

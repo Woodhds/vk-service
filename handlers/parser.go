@@ -15,10 +15,9 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/woodhds/vk.service/message"
 	"github.com/woodhds/vk.service/notifier"
-	"github.com/woodhds/vk.service/vkclient"
 )
 
-func ParserHandler(factory database.ConnectionFactory, wallClient vkclient.WallClient, count int, notifier *notifier.NotifyService, userQueryService database.UsersQueryService) http.Handler {
+func ParserHandler(factory database.ConnectionFactory, messageService VkMessagesService, count int, notifier *notifier.NotifyService, userQueryService database.UsersQueryService) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		defer func() {
 			notifier.Success("Grab start")
@@ -26,16 +25,16 @@ func ParserHandler(factory database.ConnectionFactory, wallClient vkclient.WallC
 
 		ids, _ := userQueryService.GetAll()
 
-		postsCh := make(chan []*message.VkRepostMessage, 10)
+		postsCh := make(chan []*message.VkRepostMessage)
 
 		ch := make(chan *message.VkMessageModel)
 
 		go func() {
 			for reposts := range postsCh {
-				posts, _ := wallClient.GetById(reposts)
+				posts := messageService.GetById(reposts)
 				var c int
-				for _, post := range posts.Response.Items {
-					ch <- message.New(post, posts.Response.Groups)
+				for _, post := range posts {
+					ch <- post
 					c++
 				}
 
@@ -51,6 +50,10 @@ func ParserHandler(factory database.ConnectionFactory, wallClient vkclient.WallC
 			ON CONFLICT(id, ownerId) DO UPDATE SET LikesCount=excluded.LikesCount, RepostsCount=excluded.RepostsCount, UserReposted=excluded.UserReposted, Images=excluded.Images`)
 
 			for m := range ch {
+				if m == nil {
+					continue
+				}
+
 				_, sqlErr := statement.ExecContext(context.Background(),
 					m.ID, m.FromID, time.Time(*m.Date), strings.Join(m.Images, ";"), m.LikesCount, m.Owner, m.OwnerID, m.RepostsCount, m.Text, m.UserReposted)
 
@@ -62,7 +65,9 @@ func ParserHandler(factory database.ConnectionFactory, wallClient vkclient.WallC
 
 		for _, id := range ids {
 			for i := 1; i <= 4; i++ {
-				go getMessages(id, i, count, wallClient, postsCh)
+				go func(page int, co int, c chan []*message.VkRepostMessage) {
+					c <- messageService.GetMessages(id, page, co)
+				}(i, count, postsCh)
 			}
 		}
 
@@ -72,26 +77,6 @@ func ParserHandler(factory database.ConnectionFactory, wallClient vkclient.WallC
 			go fetch(httpClient, i, postsCh)
 		}
 	})
-}
-
-func getMessages(id int, page int, count int, wallClient vkclient.WallClient, postsCh chan []*message.VkRepostMessage) {
-
-	data, e := wallClient.Get(&vkclient.WallGetRequest{OwnerId: id, Offset: (page - 1) * count, Count: count})
-
-	if e != nil {
-		fmt.Println(e)
-		return
-	}
-
-	var messages []*message.VkRepostMessage
-
-	for _, v := range data.Response.Items {
-		if len(v.CopyHistory) > 0 {
-			messages = append(messages, &message.VkRepostMessage{OwnerID: v.CopyHistory[0].OwnerID, ID: v.CopyHistory[0].ID})
-		}
-	}
-
-	postsCh <- messages
 }
 
 func fetch(httpClient *http.Client, page int, postsCh chan []*message.VkRepostMessage) {
