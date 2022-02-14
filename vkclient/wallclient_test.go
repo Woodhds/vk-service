@@ -7,7 +7,9 @@ import (
 )
 
 func TestRepost(t *testing.T) {
-	wallClient, e := NewWallClient("", "5.130")
+	token := ""
+	version := ""
+	wallClient, e := NewWallClient(&token, &version)
 
 	if e != nil {
 		t.Error(e)

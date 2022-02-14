@@ -35,7 +35,7 @@ func UsersHandler(usersService database.UsersQueryService) http.Handler {
 	})
 }
 
-func UsersSearchHandler(token string, version string) http.Handler {
+func UsersSearchHandler(token *string, version *string) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query().Get("q")
 
@@ -46,6 +46,6 @@ func UsersSearchHandler(token string, version string) http.Handler {
 		client, _ := vkclient.NewUserClient(token, version)
 		response, _ := client.Search(q)
 
-		json.NewEncoder(rw).Encode(&response)
+		json.NewEncoder(rw).Encode(response)
 	})
 }

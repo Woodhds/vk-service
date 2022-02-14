@@ -3,7 +3,9 @@ package vkclient
 import "testing"
 
 func TestSearch(t *testing.T) {
-	client, e := NewUserClient("", "5.130")
+	token := ""
+	version := ""
+	client, e := NewUserClient(&token, &version)
 	if client == nil {
 		t.Error("client is nil", e)
 	}

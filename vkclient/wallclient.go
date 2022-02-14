@@ -32,7 +32,7 @@ type RepostResponse struct {
 	} `json:"response"`
 }
 
-func NewWallClient(token string, version string) (*wallClient, error) {
+func NewWallClient(token *string, version *string) (*wallClient, error) {
 	baseClient, e := New(token, version)
 
 	if e != nil {
@@ -97,7 +97,7 @@ func (wallClient *wallClient) GetById(messages []*message.VkRepostMessage, field
 
 	data := &message.VkResponse{}
 
-	if e:= response.Read(data); e != nil {
+	if e := response.Read(data); e != nil {
 		return nil, e
 	}
 

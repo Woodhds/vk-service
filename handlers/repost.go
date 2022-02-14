@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func RepostHandler(factory database.ConnectionFactory, token string, version string) http.Handler {
+func RepostHandler(factory database.ConnectionFactory, token *string, version *string) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		var d []*message.VkRepostMessage
 		json.NewDecoder(r.Body).Decode(&d)

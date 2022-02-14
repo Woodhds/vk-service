@@ -16,8 +16,8 @@ type BaseClient struct {
 	client      *http.Client
 	m           *sync.Mutex
 	baseUrl     *url.URL
-	accessToken string
-	version     string
+	accessToken *string
+	version     *string
 }
 
 type Response struct {
@@ -44,12 +44,12 @@ func (resp *Response) Read(dest interface{}) error {
 	return nil
 }
 
-func New(accessToken string, v string) (*BaseClient, error) {
-	if accessToken == "" {
+func New(accessToken *string, v *string) (*BaseClient, error) {
+	if *accessToken == "" {
 		return nil, errors.New("access token required")
 	}
 
-	if v == "" {
+	if *v == "" {
 		return nil, errors.New("version required")
 	}
 
@@ -80,8 +80,8 @@ func (client *BaseClient) Request(httpMethod string, path string, query string, 
 	u.Path = fmt.Sprintf("%s%s", u.Path, path)
 	q, _ := url.ParseQuery(query)
 
-	q.Add("access_token", client.accessToken)
-	q.Add("v", client.version)
+	q.Add("access_token", *client.accessToken)
+	q.Add("v", *client.version)
 
 	u.RawQuery = q.Encode()
 
