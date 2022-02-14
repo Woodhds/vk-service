@@ -11,6 +11,7 @@ import (
 const (
 	maxConnection     = 20
 	connectionTimeout = 60
+	idleConnectionTime = 30
 )
 
 type ConnectionFactory interface {
@@ -38,6 +39,7 @@ func NewConnectionFactory(connectionString *string) (ConnectionFactory, error) {
 
 		conn.SetMaxOpenConns(maxConnection)
 		conn.SetConnMaxLifetime(connectionTimeout * time.Second)
+		conn.SetConnMaxIdleTime(idleConnectionTime * time.Second)
 
 		return &connectionFactory{db: conn}, nil
 	}
