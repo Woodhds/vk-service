@@ -8,7 +8,7 @@ import (
 
 func TestGetConnection(t *testing.T) {
 	connString := "host=localhost user=postgres port=5432 dbname=postgres"
-	factory, _ := database.NewConnectionFactory(&connString)
+	factory, _ := database.NewConnectionFactory(connString)
 	for i := 0; i < 50; i++ {
 		con, _ := factory.GetConnection(context.Background())
 		con.Close()

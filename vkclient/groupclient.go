@@ -13,7 +13,7 @@ type GroupJoinResponse struct {
 	Response int `json:"response"`
 }
 
-func NewGroupClient(token *string, v *string) (*GroupClient, error) {
+func NewGroupClient(token string, v string) (*GroupClient, error) {
 	client, err := New(token, v)
 	if err != nil {
 		return nil, err

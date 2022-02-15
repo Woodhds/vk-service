@@ -25,7 +25,7 @@ type vkUserResponse struct {
 	} `json:"response"`
 }
 
-func NewUserClient(token *string, v *string) (*UserClient, error) {
+func NewUserClient(token string, v string) (*UserClient, error) {
 	client, err := New(token, v)
 	if err != nil {
 		return nil, err

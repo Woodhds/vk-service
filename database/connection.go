@@ -31,11 +31,11 @@ func (factory *connectionFactory) Info() sql.DBStats {
 	return factory.db.Stats()
 }
 
-func NewConnectionFactory(connectionString *string) (ConnectionFactory, error) {
-	if len(*connectionString) == 0 {
+func NewConnectionFactory(connectionString string) (ConnectionFactory, error) {
+	if len(connectionString) == 0 {
 		return nil, errors.New("connection string is empty")
 	}
-	if conn, err := sql.Open("pgx", *connectionString); err != nil {
+	if conn, err := sql.Open("pgx", connectionString); err != nil {
 		return nil, err
 	} else {
 		if e := conn.Ping(); e != nil {

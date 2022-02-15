@@ -32,7 +32,7 @@ type RepostResponse struct {
 	} `json:"response"`
 }
 
-func NewWallClient(token *string, version *string) (*wallClient, error) {
+func NewWallClient(token string, version string) (*wallClient, error) {
 	baseClient, e := New(token, version)
 
 	if e != nil {
