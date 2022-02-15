@@ -44,6 +44,7 @@ func ParserHandler(factory database.ConnectionFactory, messageService VkMessages
 
 		go func() {
 			conn, _ := factory.GetConnection(context.Background())
+			defer conn.Close()
 			statement, _ := conn.PrepareContext(context.Background(), `
 			insert into messages (Id, FromId, Date, Images, LikesCount, Owner, OwnerId, RepostsCount, Text, UserReposted) 
 			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 

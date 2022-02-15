@@ -9,21 +9,26 @@ import (
 )
 
 const (
-	maxConnection     = 20
-	connectionTimeout = 60
+	maxConnection      = 20
+	connectionTimeout  = 60
 	idleConnectionTime = 30
 )
 
 type ConnectionFactory interface {
 	GetConnection(ctx context.Context) (*sql.Conn, error)
+	Info() sql.DBStats
 }
 
 type connectionFactory struct {
 	db *sql.DB
 }
 
-func (factory connectionFactory) GetConnection(ctx context.Context) (*sql.Conn, error) {
+func (factory *connectionFactory) GetConnection(ctx context.Context) (*sql.Conn, error) {
 	return factory.db.Conn(ctx)
+}
+
+func (factory *connectionFactory) Info() sql.DBStats {
+	return factory.db.Stats()
 }
 
 func NewConnectionFactory(connectionString *string) (ConnectionFactory, error) {
