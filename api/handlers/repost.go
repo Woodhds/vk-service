@@ -3,8 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/woodhds/vk.service/database"
+	vkclient2 "github.com/woodhds/vk.service/internal/vkclient"
 	"github.com/woodhds/vk.service/message"
-	"github.com/woodhds/vk.service/vkclient"
 	"net/http"
 )
 
@@ -13,8 +13,8 @@ func RepostHandler(factory database.ConnectionFactory, token string, version str
 		var d []*message.VkRepostMessage
 		json.NewDecoder(r.Body).Decode(&d)
 
-		wallClient, _ := vkclient.NewWallClient(token, version)
-		groupClient, _ := vkclient.NewGroupClient(token, version)
+		wallClient, _ := vkclient2.NewWallClient(token, version)
+		groupClient, _ := vkclient2.NewGroupClient(token, version)
 
 		data, _ := wallClient.GetById(d, "is_member")
 

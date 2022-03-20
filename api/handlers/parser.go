@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/woodhds/vk.service/database"
+	"github.com/woodhds/vk.service/internal/notifier"
 	"log"
 	"net/http"
 	"net/url"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/woodhds/vk.service/message"
-	"github.com/woodhds/vk.service/notifier"
 )
 
 func ParserHandler(factory database.ConnectionFactory, messageService VkMessagesService, count int, notifier *notifier.NotifyService, userQueryService database.UsersQueryService) http.Handler {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/woodhds/vk.service/vkclient"
+	"github.com/woodhds/vk.service/internal/vkclient"
 )
 
 type UsersQueryService interface {

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/woodhds/vk.service/database"
-	"github.com/woodhds/vk.service/predictor"
+	"github.com/woodhds/vk.service/internal/predictor"
 	"net/http"
 	"strconv"
 )
@@ -38,7 +38,7 @@ func MessageSaveHandler(predict predictor.Predictor, factory database.Connection
 		conn, _ := factory.GetConnection(r.Context())
 		defer conn.Close()
 
-		if d, e := conn.QueryContext(r.Context(),"SELECT Text, Owner from messages where OwnerId = $1 and Id = $2", owner, messageId); e != nil {
+		if d, e := conn.QueryContext(r.Context(), "SELECT Text, Owner from messages where OwnerId = $1 and Id = $2", owner, messageId); e != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		} else {

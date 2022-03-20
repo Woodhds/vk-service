@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
-	"github.com/woodhds/vk.service/config"
+	"github.com/woodhds/vk.service/api/handlers"
 	"github.com/woodhds/vk.service/database"
-	"github.com/woodhds/vk.service/handlers"
-	"github.com/woodhds/vk.service/notifier"
-	"github.com/woodhds/vk.service/predictor"
-	"github.com/woodhds/vk.service/vkclient"
+	"github.com/woodhds/vk.service/internal/notifier"
+	"github.com/woodhds/vk.service/internal/predictor"
+	"github.com/woodhds/vk.service/internal/vkclient"
 	"log"
 	"net/http"
 	"os"
@@ -27,9 +26,9 @@ var (
 func main() {
 	token = os.Getenv("TOKEN")
 	version = os.Getenv("VERSION")
-	config.ParseInt(&count, 50, os.Getenv("COUNT"))
+	ParseInt(&count, 50, os.Getenv("COUNT"))
 	host = os.Getenv("HOST")
-	config.ParseInt(&port, 4222, os.Getenv("PORT"))
+	ParseInt(&port, 4222, os.Getenv("PORT"))
 
 	if token == "" {
 		panic("access token required")

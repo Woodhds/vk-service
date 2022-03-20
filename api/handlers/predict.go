@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/woodhds/vk.service/internal/predictor"
 	"github.com/woodhds/vk.service/message"
-	"github.com/woodhds/vk.service/predictor"
 	"net/http"
 	"strconv"
 )

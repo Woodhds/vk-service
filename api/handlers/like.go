@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/woodhds/vk.service/notifier"
+	"github.com/woodhds/vk.service/internal/notifier"
 	"net/http"
 )
 

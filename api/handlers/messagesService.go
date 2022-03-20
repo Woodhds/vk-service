@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/woodhds/vk.service/internal/vkclient"
 	"github.com/woodhds/vk.service/message"
-	"github.com/woodhds/vk.service/vkclient"
 )
 
 type VkMessagesService interface {

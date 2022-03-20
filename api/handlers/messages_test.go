@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"github.com/woodhds/vk.service/internal/predictor"
 	"testing"
 
 	"github.com/woodhds/vk.service/message"
-	"github.com/woodhds/vk.service/predictor"
 )
 
 func BenchmarkMapCategoriesToMessages(t *testing.B) {

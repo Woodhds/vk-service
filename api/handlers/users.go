@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/woodhds/vk.service/database"
-	"github.com/woodhds/vk.service/vkclient"
+	"github.com/woodhds/vk.service/internal/vkclient"
 	"net/http"
 )
 
