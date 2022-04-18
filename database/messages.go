@@ -18,7 +18,7 @@ func (m messageQueryService) GetMessages(search string, ctx context.Context) ([]
 	conn, _ := m.factory.GetConnection(ctx)
 	defer conn.Close()
 
-	stm, _ := conn.PrepareContext(ctx, `SELECT messages.Id,
+	res, e := conn.QueryContext(ctx, `SELECT messages.Id,
 			       FromId,
 			       Date,
 			       Images,
@@ -31,8 +31,6 @@ func (m messageQueryService) GetMessages(search string, ctx context.Context) ([]
 			FROM messages inner join messages_search as s on messages.Id = s.Id AND messages.OwnerId = s.OwnerId
 				where s.Text @@ phraseto_tsquery($1)
 				order by ts_rank(to_tsvector(s.text), phraseto_tsquery($1)) desc`)
-
-	res, e := stm.QueryContext(ctx, search)
 
 	if e != nil {
 		return nil, e
