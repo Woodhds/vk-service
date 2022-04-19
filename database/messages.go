@@ -18,7 +18,8 @@ func (m messageQueryService) GetMessages(search string, ctx context.Context) ([]
 	conn, _ := m.factory.GetConnection(ctx)
 	defer conn.Close()
 
-	res, e := conn.QueryContext(ctx, `SELECT messages.Id,
+	res, e := conn.QueryContext(ctx, `
+			SELECT messages.Id,
 			       FromId,
 			       Date,
 			       Images,
@@ -28,9 +29,10 @@ func (m messageQueryService) GetMessages(search string, ctx context.Context) ([]
 			       RepostsCount,
 			       ts_headline(messages.text, phraseto_tsquery($1), 'HighlightAll = true') as Text,
 			       UserReposted
-			FROM messages inner join messages_search as s on messages.Id = s.Id AND messages.OwnerId = s.OwnerId
-				where s.Text @@ phraseto_tsquery($1)
-				order by ts_rank(to_tsvector(s.text), phraseto_tsquery($1)) desc`)
+			FROM messages 
+			inner join messages_search as s on messages.Id = s.Id AND messages.OwnerId = s.OwnerId
+			where s.Text @@ phraseto_tsquery($1)
+			order by ts_rank(to_tsvector(s.text), phraseto_tsquery($1)) desc`, search)
 
 	if e != nil {
 		return nil, e

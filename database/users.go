@@ -65,7 +65,7 @@ func (m *userQueryService) GetFullUsers(ctx context.Context) ([]*vkclient.VkUser
 func (m *userQueryService) InsertNew(id int, name string, avatar string, ctx context.Context) error {
 	conn, _ := m.factory.GetConnection(ctx)
 	defer conn.Close()
-	if _, err := conn.ExecContext(ctx, "INSERT INTO VkUserModel (Id, Avatar, Name) VALUES ($1, $2, $3)"); err != nil {
+	if _, err := conn.ExecContext(ctx, "INSERT INTO VkUserModel (Id, Avatar, Name) VALUES ($1, $2, $3)", id, avatar, name); err != nil {
 		return err
 	}
 
