@@ -32,15 +32,25 @@ func (n *ImageArray) Scan(value interface{}) error {
 }
 
 func New(post *VkMessage, groups []*VkGroup) *VkMessageModel {
+
+	likes := 0
+	if post.Likes != nil {
+		likes = post.Likes.Count
+	}
+	reposts := 0
+	if post.Reposts != nil {
+		reposts = post.Reposts.Count
+	}
+
 	model := &VkMessageModel{
 		ID:           post.ID,
 		FromID:       post.FromID,
 		Date:         post.Date,
 		Images:       []string{},
-		LikesCount:   post.Likes.Count,
+		LikesCount:   likes,
 		Owner:        "",
 		OwnerID:      post.OwnerID,
-		RepostsCount: post.Reposts.Count,
+		RepostsCount: reposts,
 		Text:         post.Text,
 	}
 
