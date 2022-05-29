@@ -38,8 +38,10 @@ func New(post *VkMessage, groups []*VkGroup) *VkMessageModel {
 		likes = post.Likes.Count
 	}
 	reposts := 0
+	userReposted := false
 	if post.Reposts != nil {
 		reposts = post.Reposts.Count
+		userReposted = post.Reposts.UserReposted == 1
 	}
 
 	model := &VkMessageModel{
@@ -52,6 +54,7 @@ func New(post *VkMessage, groups []*VkGroup) *VkMessageModel {
 		OwnerID:      post.OwnerID,
 		RepostsCount: reposts,
 		Text:         post.Text,
+		UserReposted: userReposted,
 	}
 
 	for _, i := range post.Attachments {
@@ -64,10 +67,6 @@ func New(post *VkMessage, groups []*VkGroup) *VkMessageModel {
 		if g.ID == -post.OwnerID {
 			model.Owner = g.Name
 		}
-	}
-
-	if post.Reposts.UserReposted == 1 {
-		model.UserReposted = true
 	}
 
 	return model
