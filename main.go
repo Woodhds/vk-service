@@ -69,7 +69,7 @@ func main() {
 
 	r.Path("/grab").Handler(handlers.ParserHandler(factory, messagesService, count, notifyService, usersQueryService)).Methods(http.MethodGet)
 
-	r.Path("/users").Handler(handlers.UsersHandler(usersQueryService)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions)
+	r.Path("/users").Handler(handlers.UsersHandler(usersQueryService)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions, http.MethodDelete)
 
 	r.Path("/repost").Handler(handlers.RepostHandler(factory, token, version)).Methods(http.MethodPost, http.MethodOptions)
 

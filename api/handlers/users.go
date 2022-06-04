@@ -5,6 +5,7 @@ import (
 	"github.com/woodhds/vk.service/database"
 	"github.com/woodhds/vk.service/internal/vkclient"
 	"net/http"
+	"strconv"
 )
 
 func UsersHandler(usersService database.UsersQueryService) http.Handler {
@@ -31,6 +32,25 @@ func UsersHandler(usersService database.UsersQueryService) http.Handler {
 			if e := usersService.InsertNew(u.Id, u.Name, u.Avatar, r.Context()); e != nil {
 				rw.WriteHeader(http.StatusBadRequest)
 			}
+		}
+
+		if r.Method == http.MethodDelete {
+			strId := r.URL.Query().Get("id")
+
+			id, e := strconv.Atoi(strId)
+			if e != nil {
+				rw.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			e = usersService.Delete(id, r.Context())
+
+			if e != nil {
+				rw.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			rw.WriteHeader(http.StatusOK)
 		}
 	})
 }

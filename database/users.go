@@ -11,6 +11,7 @@ type UsersQueryService interface {
 	GetAll() ([]int, error)
 	GetFullUsers(ctx context.Context) ([]*vkclient.VkUserMdodel, error)
 	InsertNew(id int, name string, avatar string, ctx context.Context) error
+	Delete(id int, ctx context.Context) error
 }
 
 type userQueryService struct {
@@ -66,6 +67,18 @@ func (m *userQueryService) InsertNew(id int, name string, avatar string, ctx con
 	conn, _ := m.factory.GetConnection(ctx)
 	defer conn.Close()
 	if _, err := conn.ExecContext(ctx, "INSERT INTO VkUserModel (Id, Avatar, Name) VALUES ($1, $2, $3)", id, avatar, name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *userQueryService) Delete(id int, ctx context.Context) error {
+	conn, _ := m.factory.GetConnection(ctx)
+
+	defer conn.Close()
+
+	if _, err := conn.ExecContext(ctx, "DELETE FROM VkUserModel where id = $1", id); err != nil {
 		return err
 	}
 
