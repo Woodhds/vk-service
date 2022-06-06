@@ -69,14 +69,13 @@ func main() {
 
 	r.Path("/grab").Handler(handlers.ParserHandler(factory, messagesService, count, notifyService, usersQueryService)).Methods(http.MethodGet)
 
-	r.Path("/users").Handler(handlers.UsersHandler(usersQueryService)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions, http.MethodDelete)
+	r.Path("/users").Handler(handlers.UsersHandler(usersQueryService, notifyService)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions, http.MethodDelete)
 
 	r.Path("/repost").Handler(handlers.RepostHandler(factory, token, version)).Methods(http.MethodPost, http.MethodOptions)
 
 	r.Path("/users/search").Handler(handlers.UsersSearchHandler(token, version)).Methods(http.MethodGet, http.MethodOptions)
 	r.Path("/messages/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(predictorClient, factory)).Methods(http.MethodPost)
 	r.Path("/notifications").Handler(notifier.NotificationHandler(notifyService)).Methods(http.MethodGet)
-	r.Path("/predict/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.PredictHandler(predictorClient, messagesService)).Methods(http.MethodPost)
 
 	fmt.Println(http.ListenAndServe(fmt.Sprintf(":%d", port), cors.Default().Handler(r)))
 }

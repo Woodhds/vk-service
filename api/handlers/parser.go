@@ -85,7 +85,7 @@ func fetch(httpClient *http.Client, page int, postsCh chan []*message.VkRepostMe
 		url.Values{
 			"page_num": []string{strconv.Itoa(page)},
 			"our":      []string{},
-			"city_id":  []string{strconv.Itoa(97)},
+			"city_id":  []string{strconv.Itoa(5)},
 		},
 	)
 

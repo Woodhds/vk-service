@@ -3,12 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/woodhds/vk.service/database"
+	"github.com/woodhds/vk.service/internal/notifier"
 	"github.com/woodhds/vk.service/internal/vkclient"
 	"net/http"
 	"strconv"
 )
 
-func UsersHandler(usersService database.UsersQueryService) http.Handler {
+func UsersHandler(usersService database.UsersQueryService, notifier *notifier.NotifyService) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			if rows, e := usersService.GetFullUsers(r.Context()); e != nil {
@@ -35,37 +36,28 @@ func UsersHandler(usersService database.UsersQueryService) http.Handler {
 		}
 
 		if r.Method == http.MethodDelete {
-			strId := r.URL.Query().Get("id")
-
-			id, e := strconv.Atoi(strId)
-			if e != nil {
-				rw.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
-			e = usersService.Delete(id, r.Context())
-
-			if e != nil {
-				rw.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
-			rw.WriteHeader(http.StatusOK)
+			deleteUser(rw, r, usersService, notifier)
 		}
 	})
 }
 
-func UsersSearchHandler(token string, version string) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		q := r.URL.Query().Get("q")
+func deleteUser(rw http.ResponseWriter, r *http.Request, usersService database.UsersQueryService, notifier *notifier.NotifyService) {
+	strId := r.URL.Query().Get("id")
 
-		if q == "" {
-			return
-		}
+	id, e := strconv.Atoi(strId)
+	if e != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-		client, _ := vkclient.NewUserClient(token, version)
-		response, _ := client.Search(q)
+	e = usersService.Delete(id, r.Context())
 
-		json.NewEncoder(rw).Encode(response)
-	})
+	if e != nil {
+		notifier.Danger(e.Error())
+		rw.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	notifier.Success("User successful deleted")
+	rw.WriteHeader(http.StatusOK)
 }
