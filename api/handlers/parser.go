@@ -19,6 +19,15 @@ import (
 
 func ParserHandler(factory database.ConnectionFactory, messageService VkMessagesService, count int, notifier *notifier.NotifyService, userQueryService database.UsersQueryService) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		cc, _ := factory.GetConnection(r.Context())
+
+		lock := database.NewDistributedLock(cc)
+
+		if lock.Lock(1, r.Context()) == false {
+			notifier.Danger("Already start")
+			return
+		}
+
 		defer func() {
 			notifier.Success("Grab start")
 		}()
@@ -44,7 +53,12 @@ func ParserHandler(factory database.ConnectionFactory, messageService VkMessages
 
 		go func() {
 			conn, _ := factory.GetConnection(context.Background())
-			defer conn.Close()
+
+			defer func() {
+				defer conn.Close()
+				lock.Unlock(1, context.Background())
+				notifier.Success("Grab stop")
+			}()
 
 			for m := range ch {
 				if m == nil {
