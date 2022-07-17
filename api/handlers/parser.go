@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -21,16 +22,19 @@ func ParserHandler(factory database.ConnectionFactory, messageService VkMessages
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		cc, _ := factory.GetConnection(r.Context())
 
+		defer cc.Close()
+
 		lock := database.NewDistributedLock(cc)
+		wg := sync.WaitGroup{}
 
 		if lock.Lock(1, r.Context()) == false {
 			notifier.Danger("Already start")
 			return
 		}
 
-		defer func() {
-			notifier.Success("Grab start")
-		}()
+		defer lock.Unlock(1, context.Background())
+
+		notifier.Success("Grab start")
 
 		ids, _ := userQueryService.GetAll()
 
@@ -52,24 +56,20 @@ func ParserHandler(factory database.ConnectionFactory, messageService VkMessages
 		}()
 
 		go func() {
-			conn, _ := factory.GetConnection(context.Background())
-
-			defer func() {
-				defer conn.Close()
-				lock.Unlock(1, context.Background())
-				notifier.Success("Grab stop")
-			}()
-
 			for m := range ch {
 				if m == nil {
 					continue
 				}
 
-				_, sqlErr := conn.ExecContext(context.Background(),
+				_, sqlErr := cc.ExecContext(context.Background(),
 					`
 						insert into messages (Id, FromId, Date, Images, LikesCount, Owner, OwnerId, RepostsCount, Text, UserReposted) 
 						values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
-						ON CONFLICT(id, ownerId) DO UPDATE SET LikesCount=excluded.LikesCount, RepostsCount=excluded.RepostsCount, UserReposted=excluded.UserReposted, Images=excluded.Images`,
+						ON CONFLICT(id, ownerId) DO UPDATE SET 
+						    LikesCount=excluded.LikesCount, 
+						    RepostsCount=excluded.RepostsCount, 
+						    UserReposted=excluded.UserReposted, 
+						    Images=excluded.Images`,
 					m.ID, m.FromID, time.Time(*m.Date), strings.Join(m.Images, ";"), m.LikesCount, m.Owner, m.OwnerID, m.RepostsCount, m.Text, m.UserReposted)
 
 				if sqlErr != nil {
@@ -80,7 +80,9 @@ func ParserHandler(factory database.ConnectionFactory, messageService VkMessages
 
 		for _, id := range ids {
 			for i := 1; i <= 4; i++ {
+				wg.Add(1)
 				go func(page int, co int, c chan []*message.VkRepostMessage) {
+					defer wg.Done()
 					c <- messageService.GetMessages(id, page, co)
 				}(i, count, postsCh)
 			}
@@ -89,12 +91,19 @@ func ParserHandler(factory database.ConnectionFactory, messageService VkMessages
 		httpClient := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 
 		for i := 0; i < 10; i++ {
-			go fetch(httpClient, i, postsCh)
+			wg.Add(1)
+			go fetch(httpClient, i, postsCh, &wg)
 		}
+
+		defer func() {
+			wg.Wait()
+			close(postsCh)
+		}()
 	})
 }
 
-func fetch(httpClient *http.Client, page int, postsCh chan []*message.VkRepostMessage) {
+func fetch(httpClient *http.Client, page int, postsCh chan []*message.VkRepostMessage, wg *sync.WaitGroup) {
+	defer wg.Done()
 	res, err := httpClient.PostForm("https://wingri.ru/main/getPosts",
 		url.Values{
 			"page_num": []string{strconv.Itoa(page)},
