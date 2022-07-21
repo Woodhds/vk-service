@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+option go_package = "github.com/woodhds/vk.post.predict;vk_post_predict";
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+service MessagePredictService {
+  rpc Predict(MessagePredictRequest) returns (MessagePredictResponse) {
+    option (google.api.http) = {
+      post: "/predict",
+      body: "*"
+    };
+  };
+  rpc Save(MessageSaveRequest) returns (google.protobuf.Empty) {
+    option(google.api.http) = {
+      put: "/predict",
+      body: "*"
+    };
+  };
+}
+
+
+message MessagePredictRequest {
+  repeated PredictRequest messages = 1;
+
+  message PredictRequest {
+    int32 owner_id = 1;
+    int32 id = 2;
+    string text = 3;
+  }
+}
+
+
+message MessagePredictResponse {
+  repeated ResponseItem messages = 1;
+
+  message ResponseItem {
+    int32 owner_id = 1;
+    int32 id = 2;
+    string category = 3;
+    bool is_accept = 4;
+    map<string, float> scores = 5;
+  }
+}
+
+message MessageSaveRequest {
+  int32 owner_id = 1;
+  int32 id = 2;
+  string text = 3;
+  string category = 4;
+  string owner_name = 5;
+}
+

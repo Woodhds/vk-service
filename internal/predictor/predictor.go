@@ -1,12 +1,12 @@
 package predictor
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"net/http"
-	"net/url"
+	"context"
+	vkPostPredict "github.com/woodhds/vk.service/gen/predict"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"log"
+	"time"
 )
 
 type PredictMessage struct {
@@ -25,123 +25,79 @@ type PredictMessageResponse struct {
 type Predictor interface {
 	Predict(messages []*PredictMessage) ([]*PredictMessage, error)
 	SaveMessage(owner int, id int, text string, ownerName string, category string) error
-	PredictMessage(message *PredictMessage) (map[string]float32, error)
 }
 
 type SavePredictRequest struct {
 	Category string `json:"category"`
 }
 
-type saveRequest struct {
-	OwnerId   int    `json:"ownerId"`
-	Id        int    `json:"id"`
-	Text      string `json:"text"`
-	Category  string `json:"category"`
-	OwnerName string `json:"ownerName"`
-}
-
 type predictorClient struct {
-	httpClient *http.Client
-	host       string
+	client vkPostPredict.MessagePredictServiceClient
 }
 
-func (c predictorClient) SaveMessage(owner int, id int, text string, ownerName string, category string) error {
-	reqData := &saveRequest{
-		OwnerId:   owner,
-		Id:        id,
+func (c *predictorClient) SaveMessage(owner int, id int, text string, ownerName string, category string) error {
+	reqData := &vkPostPredict.MessageSaveRequest{
+		OwnerId:   int32(owner),
+		Id:        int32(id),
 		Text:      text,
 		Category:  category,
 		OwnerName: ownerName,
 	}
-	b, _ := json.Marshal(reqData)
 
-	if req, e := makeRequest(http.MethodPut, c.host, "predict", b); e == nil {
-		if resp, e := c.httpClient.Do(req); e != nil {
-			return e
-		} else {
-			if resp.StatusCode != http.StatusOK {
-				return errors.New(fmt.Sprintf("Server responded with status code %d", resp.StatusCode))
-			}
-		}
-	} else {
+	if _, e := c.client.Save(context.Background(), reqData); e != nil {
 		return e
 	}
 
 	return nil
 }
 
-func (c predictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage, error) {
-	b, _ := json.Marshal(messages)
+func (c *predictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage, error) {
+	request := createRequest(messages)
 
-	if req, e := makeRequest(http.MethodPost, c.host, "predict", b); e == nil {
-		if resp, e := c.httpClient.Do(req); e != nil {
-			return messages, e
-		} else {
-			if resp.StatusCode != http.StatusOK {
-				return messages, errors.New(fmt.Sprintf("Server responded with status %d", resp.StatusCode))
-			}
+	respData, e := c.client.Predict(context.Background(), request)
 
-			var respData PredictMessageResponse
+	if e != nil {
+		log.Print(e)
+		return messages, e
+	}
 
-			json.NewDecoder(resp.Body).Decode(&respData)
-
-			for _, r := range messages {
-				for _, h := range respData.Messages {
-					if r.Id == h.Id && r.OwnerId == h.OwnerId {
-						r.Category = h.Category
-						r.IsAccept = h.IsAccept
-						r.Scores = h.Scores
-						break
-					}
-				}
+	for i := 0; i < len(messages); i++ {
+		h := messages[i]
+		for j := 0; j < len(respData.Messages); j++ {
+			r := respData.Messages[j]
+			if int(r.Id) == h.Id && int(r.OwnerId) == h.OwnerId {
+				r.Category = h.Category
+				r.IsAccept = h.IsAccept
+				r.Scores = h.Scores
+				break
 			}
 		}
-
-	} else {
-		return messages, e
 	}
 
 	return messages, nil
 }
 
-func (c *predictorClient) PredictMessage(message *PredictMessage) (map[string]float32, error) {
-	d := map[string]string{"text": message.Text}
-	b, _ := json.Marshal(d)
-	if req, e := makeRequest(http.MethodPost, c.host, fmt.Sprintf("predict/%d/%d", message.OwnerId, message.Id), b); e == nil {
-		if resp, e := c.httpClient.Do(req); e != nil {
-			return make(map[string]float32), e
-		} else {
-			if resp.StatusCode != http.StatusOK {
-				return make(map[string]float32), errors.New(fmt.Sprintf("Server responded with status %d", resp.StatusCode))
-			}
-
-			var respData map[string]float32
-
-			json.NewDecoder(resp.Body).Decode(&respData)
-
-			return respData, nil
-		}
-
-	} else {
-		return nil, e
-	}
-}
-
 func NewClient(host string) (Predictor, error) {
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	dialContext, _ := grpc.DialContext(
+		ctx,
+		host,
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client := vkPostPredict.NewMessagePredictServiceClient(dialContext)
 	return &predictorClient{
-		httpClient: &http.Client{},
-		host:       host,
+		client: client,
 	}, nil
 }
 
-func makeRequest(method string, host string, path string, body []byte) (*http.Request, error) {
-	u, _ := url.Parse(host)
-	u.Path = path
-	if req, e := http.NewRequest(method, u.String(), bytes.NewBuffer(body)); e == nil {
-		req.Header.Add("content-type", "application/json")
-
-		return req, nil
-	} else {
-		return nil, e
+func createRequest(messages []*PredictMessage) *vkPostPredict.MessagePredictRequest {
+	request := vkPostPredict.MessagePredictRequest{Messages: make([]*vkPostPredict.MessagePredictRequest_PredictRequest, len(messages))}
+	for i := 0; i < len(messages); i++ {
+		request.Messages[i] = &vkPostPredict.MessagePredictRequest_PredictRequest{
+			OwnerId: int32(messages[i].OwnerId),
+			Id:      int32(messages[i].Id),
+			Text:    messages[i].Text,
+		}
 	}
+
+	return &request
 }
