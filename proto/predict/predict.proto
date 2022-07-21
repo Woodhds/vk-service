@@ -24,7 +24,7 @@ message MessagePredictRequest {
   repeated PredictRequest messages = 1;
 
   message PredictRequest {
-    int32 owner_id = 1;
+    int32 owner_id = 1 [json_name="ownerId"];
     int32 id = 2;
     string text = 3;
   }
@@ -35,19 +35,19 @@ message MessagePredictResponse {
   repeated ResponseItem messages = 1;
 
   message ResponseItem {
-    int32 owner_id = 1;
+    int32 owner_id = 1 [json_name="ownerId"];
     int32 id = 2;
     string category = 3;
-    bool is_accept = 4;
+    bool is_accept = 4 [json_name="isAccept"];
     map<string, float> scores = 5;
   }
 }
 
 message MessageSaveRequest {
-  int32 owner_id = 1;
+  int32 owner_id = 1 [json_name="ownerId"];
   int32 id = 2;
   string text = 3;
   string category = 4;
-  string owner_name = 5;
+  string owner_name = 5 [json_name="ownerName"];
 }
 

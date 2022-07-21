@@ -1,12 +1,13 @@
 package predictor
 
 import (
-	"context"
+	"bytes"
+	"errors"
+	"fmt"
+	"github.com/golang/protobuf/jsonpb"
 	vkPostPredict "github.com/woodhds/vk.service/gen/predict"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"log"
-	"time"
+	"net/http"
+	"net/url"
 )
 
 type PredictMessage struct {
@@ -16,10 +17,6 @@ type PredictMessage struct {
 	Text     string             `json:"text"`
 	IsAccept bool               `json:"isAccept"`
 	Scores   map[string]float32 `json:"scores"`
-}
-
-type PredictMessageResponse struct {
-	Messages []*PredictMessage `json:"messages"`
 }
 
 type Predictor interface {
@@ -32,7 +29,8 @@ type SavePredictRequest struct {
 }
 
 type predictorClient struct {
-	client vkPostPredict.MessagePredictServiceClient
+	httpClient *http.Client
+	host       string
 }
 
 func (c *predictorClient) SaveMessage(owner int, id int, text string, ownerName string, category string) error {
@@ -43,8 +41,18 @@ func (c *predictorClient) SaveMessage(owner int, id int, text string, ownerName 
 		Category:  category,
 		OwnerName: ownerName,
 	}
+	marshaler := jsonpb.Marshaler{}
+	b, _ := marshaler.MarshalToString(reqData)
 
-	if _, e := c.client.Save(context.Background(), reqData); e != nil {
+	if req, e := makeRequest(http.MethodPut, c.host, "predict", []byte(b)); e == nil {
+		if resp, e := c.httpClient.Do(req); e != nil {
+			return e
+		} else {
+			if resp.StatusCode != http.StatusOK {
+				return errors.New(fmt.Sprintf("Server responded with status code %d", resp.StatusCode))
+			}
+		}
+	} else {
 		return e
 	}
 
@@ -52,44 +60,59 @@ func (c *predictorClient) SaveMessage(owner int, id int, text string, ownerName 
 }
 
 func (c *predictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage, error) {
-	request := createRequest(messages)
+	marshaler := jsonpb.Marshaler{}
+	b, _ := marshaler.MarshalToString(makePayload(messages))
 
-	respData, e := c.client.Predict(context.Background(), request)
+	if req, e := makeRequest(http.MethodPost, c.host, "predict", []byte(b)); e == nil {
+		if resp, e := c.httpClient.Do(req); e != nil {
+			return messages, e
+		} else {
+			if resp.StatusCode != http.StatusOK {
+				return messages, errors.New(fmt.Sprintf("Server responded with status %d", resp.StatusCode))
+			}
 
-	if e != nil {
-		log.Print(e)
-		return messages, e
-	}
+			var respData vkPostPredict.MessagePredictResponse
+			jsonpb.Unmarshal(resp.Body, &respData)
 
-	for i := 0; i < len(messages); i++ {
-		h := messages[i]
-		for j := 0; j < len(respData.Messages); j++ {
-			r := respData.Messages[j]
-			if int(r.Id) == h.Id && int(r.OwnerId) == h.OwnerId {
-				r.Category = h.Category
-				r.IsAccept = h.IsAccept
-				r.Scores = h.Scores
-				break
+			for _, r := range messages {
+				for _, h := range respData.Messages {
+					if int32(r.Id) == h.Id && int32(r.OwnerId) == h.OwnerId {
+						r.Category = h.Category
+						r.IsAccept = h.IsAccept
+						r.Scores = h.Scores
+						break
+					}
+				}
 			}
 		}
+
+	} else {
+		return messages, e
 	}
 
 	return messages, nil
 }
 
 func NewClient(host string) (Predictor, error) {
-	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
-	dialContext, _ := grpc.DialContext(
-		ctx,
-		host,
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
-	client := vkPostPredict.NewMessagePredictServiceClient(dialContext)
 	return &predictorClient{
-		client: client,
+		httpClient: &http.Client{},
+		host:       host,
 	}, nil
 }
 
-func createRequest(messages []*PredictMessage) *vkPostPredict.MessagePredictRequest {
+func makeRequest(method string, host string, path string, body []byte) (*http.Request, error) {
+	u, _ := url.Parse(host)
+	u.Path = path
+	if req, e := http.NewRequest(method, u.String(), bytes.NewBuffer(body)); e == nil {
+		req.Header.Add("content-type", "application/json")
+
+		return req, nil
+	} else {
+		return nil, e
+	}
+}
+
+func makePayload(messages []*PredictMessage) *vkPostPredict.MessagePredictRequest {
 	request := vkPostPredict.MessagePredictRequest{Messages: make([]*vkPostPredict.MessagePredictRequest_PredictRequest, len(messages))}
 	for i := 0; i < len(messages); i++ {
 		request.Messages[i] = &vkPostPredict.MessagePredictRequest_PredictRequest{
@@ -97,7 +120,7 @@ func createRequest(messages []*PredictMessage) *vkPostPredict.MessagePredictRequ
 			Id:      int32(messages[i].Id),
 			Text:    messages[i].Text,
 		}
-	}
 
+	}
 	return &request
 }
