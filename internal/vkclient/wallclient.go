@@ -44,7 +44,7 @@ func NewWallClient(token string, version string) (*wallClient, error) {
 	}, nil
 }
 
-func (wallClient wallClient) Get(request *WallGetRequest) (*message.VkWallResponse, error) {
+func (wallClient *wallClient) Get(request *WallGetRequest) (*message.VkWallResponse, error) {
 	u := url.URL{}
 	query := u.Query()
 	query.Add("filter", request.Filter)
