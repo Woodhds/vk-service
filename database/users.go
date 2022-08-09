@@ -9,7 +9,7 @@ import (
 
 type UsersQueryService interface {
 	GetAll() ([]int, error)
-	GetFullUsers(ctx context.Context) ([]*vkclient.VkUserMdodel, error)
+	GetFullUsers(ctx context.Context) ([]*vkclient.VkUserModel, error)
 	InsertNew(id int, name string, avatar string, ctx context.Context) error
 	Delete(id int, ctx context.Context) error
 }
@@ -39,7 +39,7 @@ func (m *userQueryService) GetAll() ([]int, error) {
 	return ids, nil
 }
 
-func (m *userQueryService) GetFullUsers(ctx context.Context) ([]*vkclient.VkUserMdodel, error) {
+func (m *userQueryService) GetFullUsers(ctx context.Context) ([]*vkclient.VkUserModel, error) {
 	conn, _ := m.factory.GetConnection(ctx)
 	defer conn.Close()
 	if rows, e := conn.QueryContext(ctx, `SELECT Id, coalesce(Name, '') as Name, coalesce(Avatar,'') as Avatar from VkUserModel`); e != nil {
@@ -47,10 +47,10 @@ func (m *userQueryService) GetFullUsers(ctx context.Context) ([]*vkclient.VkUser
 	} else {
 		defer rows.Close()
 
-		var res []*vkclient.VkUserMdodel
+		var res []*vkclient.VkUserModel
 
 		for rows.Next() {
-			u := vkclient.VkUserMdodel{}
+			u := vkclient.VkUserModel{}
 			if e := rows.Scan(&u.Id, &u.Name, &u.Avatar); e == nil {
 				res = append(res, &u)
 			} else {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-type VkUserMdodel struct {
+type VkUserModel struct {
 	Id     int    `json:"id"`
 	Name   string `json:"name"`
 	Avatar string `json:"avatar"`
@@ -36,7 +36,7 @@ func NewUserClient(token string, v string) (*UserClient, error) {
 	}, nil
 }
 
-func (userClient *UserClient) Search(q string) ([]*VkUserMdodel, error) {
+func (userClient *UserClient) Search(q string) ([]*VkUserModel, error) {
 	resp, err := userClient.baseClient.Get("users.search", fmt.Sprintf("q=%s&fields=photo_50", q))
 	if err != nil {
 		return nil, err
@@ -46,10 +46,10 @@ func (userClient *UserClient) Search(q string) ([]*VkUserMdodel, error) {
 
 	resp.Read(data)
 
-	result := make([]*VkUserMdodel, len(data.Response.Items))
+	result := make([]*VkUserModel, len(data.Response.Items))
 
 	for i, u := range data.Response.Items {
-		result[i] = &VkUserMdodel{u.Id, fmt.Sprintf("%s %s", u.FirstName, u.LastName), u.Photo50}
+		result[i] = &VkUserModel{u.Id, fmt.Sprintf("%s %s", u.FirstName, u.LastName), u.Photo50}
 	}
 
 	return result, nil

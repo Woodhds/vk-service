@@ -21,7 +21,7 @@ func BenchmarkMapCategoriesToMessages(t *testing.B) {
 	}
 
 	predictions := []*predictor.PredictMessage{{OwnerId: 1, Id: 1, Category: "Test", Text: "tt"}}
-	MapCategoriesToMessages(data, predictions)
+	mapCategoriesToMessages(data, predictions)
 
 	for i := 0; i < len(data); i++ {
 		if data[i].Category == "" {

@@ -5,7 +5,7 @@ import "testing"
 func TestSearch(t *testing.T) {
 	token := ""
 	version := ""
-	client, e := NewUserClient(&token, &version)
+	client, e := NewUserClient(token, version)
 	if client == nil {
 		t.Error("client is nil", e)
 	}

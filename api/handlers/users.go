@@ -22,7 +22,7 @@ func UsersHandler(usersService database.UsersQueryService, notifier *notifier.No
 		}
 
 		if r.Method == http.MethodPost {
-			u := &vkclient.VkUserMdodel{}
+			u := &vkclient.VkUserModel{}
 			json.NewDecoder(r.Body).Decode(u)
 
 			if u.Id == 0 {

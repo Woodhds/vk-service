@@ -84,6 +84,10 @@ type VkProfile struct {
 	LastName  string `json:"last_name"`
 }
 
+func (t *Timestamp) Time() time.Time {
+	return time.Time(*t)
+}
+
 func (t *Timestamp) MarshalJSON() ([]byte, error) {
 	stamp := fmt.Sprintf("\"%s\"", time.Time(*t).UTC().Format(time.RFC3339))
 	return []byte(stamp), nil
