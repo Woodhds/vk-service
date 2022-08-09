@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/golang/protobuf/jsonpb"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	vkPostPredict "github.com/woodhds/vk.service/gen/predict"
 	"net/http"
 	"net/url"
@@ -41,10 +41,10 @@ func (c *predictorClient) SaveMessage(owner int, id int, text string, ownerName 
 		Category:  category,
 		OwnerName: ownerName,
 	}
-	marshaler := jsonpb.Marshaler{}
-	b, _ := marshaler.MarshalToString(reqData)
+	marshaler := runtime.JSONPb{}
+	b, _ := marshaler.Marshal(reqData)
 
-	if req, e := makeRequest(http.MethodPut, c.host, "predict", []byte(b)); e == nil {
+	if req, e := makeRequest(http.MethodPut, c.host, "predict", b); e == nil {
 		if resp, e := c.httpClient.Do(req); e != nil {
 			return e
 		} else {
@@ -60,10 +60,10 @@ func (c *predictorClient) SaveMessage(owner int, id int, text string, ownerName 
 }
 
 func (c *predictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage, error) {
-	marshaler := jsonpb.Marshaler{}
-	b, _ := marshaler.MarshalToString(makePayload(messages))
+	marshaler := runtime.JSONPb{}
+	b, _ := marshaler.Marshal(makePayload(messages))
 
-	if req, e := makeRequest(http.MethodPost, c.host, "predict", []byte(b)); e == nil {
+	if req, e := makeRequest(http.MethodPost, c.host, "predict", b); e == nil {
 		if resp, e := c.httpClient.Do(req); e != nil {
 			return messages, e
 		} else {
@@ -72,7 +72,7 @@ func (c *predictorClient) Predict(messages []*PredictMessage) ([]*PredictMessage
 			}
 
 			var respData vkPostPredict.MessagePredictResponse
-			jsonpb.Unmarshal(resp.Body, &respData)
+			marshaler.NewDecoder(resp.Body).Decode(&respData)
 
 			for _, r := range messages {
 				for _, h := range respData.Messages {

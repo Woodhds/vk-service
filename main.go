@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/woodhds/vk.service/api/handlers"
 	"github.com/woodhds/vk.service/database"
-	vkservice "github.com/woodhds/vk.service/internal/app/vk-service"
+	vkService "github.com/woodhds/vk.service/internal/app/vk-service"
 	"github.com/woodhds/vk.service/internal/notifier"
 	"github.com/woodhds/vk.service/internal/predictor"
 	"github.com/woodhds/vk.service/internal/vkclient"
@@ -58,7 +58,9 @@ func main() {
 		log.Println(e)
 	}
 
-	app := vkservice.NewApp(predictorClient, messageQueryService, notifyService, usersQueryService, factory, messagesService, token, version, count)
+	app := vkService.NewApp(predictorClient, messageQueryService, notifyService, usersQueryService, factory, messagesService, token, version, count)
+
+	app.Initialize()
 
 	app.Run(port)
 }

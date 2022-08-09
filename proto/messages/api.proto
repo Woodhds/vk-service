@@ -10,7 +10,8 @@ option go_package = "github.com/woodhds/vk.post.predict;vk_messages";
 service MessagesService {
   rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse) {
     option(google.api.http) = {
-      get: "/api/messages"
+      post: "/api/messages",
+      body: "*"
     };
   };
 }
@@ -23,22 +24,18 @@ message GetMessagesResponse {
   repeated VkMessageExt messages = 1;
 }
 
-message VkMessageResponse {
+message VkMessageExt {
   int32 id = 1;
   int32 from_id = 2 [json_name="fromId"];
   google.protobuf.Timestamp date = 3;
   repeated string images = 4;
   int32 likes_count = 5 [json_name="likesCount"];
-  google.protobuf.StringValue owner = 6;
+  string owner = 6;
   int32 owner_id = 7 [json_name="ownerId"];
   int32 reposts_count = 8 [json_name="repostsCount"];
   string text = 9;
   bool user_reposted = 10 [json_name="userReposted"];
-}
-
-message VkMessageExt {
-  VkMessageResponse message = 1;
-  string category = 2;
-  bool is_accept = 3 [json_name="isAccept"];
-  map<string, float> scores = 4;
+  string category = 11;
+  bool is_accept = 12 [json_name="isAccept"];
+  map<string, float> scores = 13;
 }
