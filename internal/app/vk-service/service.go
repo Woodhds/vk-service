@@ -9,6 +9,7 @@ import (
 	"github.com/woodhds/vk.service/api/handlers"
 	"github.com/woodhds/vk.service/database"
 	vkMessages "github.com/woodhds/vk.service/gen/messages"
+	"github.com/woodhds/vk.service/internal/messages"
 	"github.com/woodhds/vk.service/internal/notifier"
 	"github.com/woodhds/vk.service/internal/predictor"
 	"net/http"
@@ -69,11 +70,10 @@ func (app *App) initializeRoutes() {
 	app.router.Path("/like").Handler(handlers.LikeHandler(app.notifyService)).Methods(http.MethodPost)
 	app.router.Path("/grab").Handler(handlers.ParserHandler(app.factory, app.messagesService, app.count, app.notifyService, app.usersQueryService)).Methods(http.MethodGet)
 	app.router.Path("/users").Handler(handlers.UsersHandler(app.usersQueryService, app.notifyService)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions, http.MethodDelete)
-	app.router.Path("/repost").Handler(handlers.RepostHandler(app.factory, app.token, app.version)).Methods(http.MethodPost, http.MethodOptions)
 	app.router.Path("/users/search").Handler(handlers.UsersSearchHandler(app.token, app.version)).Methods(http.MethodGet, http.MethodOptions)
 	app.router.Path("/messages/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(app.predictor, app.factory)).Methods(http.MethodPost)
 	app.router.Path("/notifications").Handler(notifier.NotificationHandler(app.notifyService)).Methods(http.MethodGet)
 
-	vkMessages.RegisterMessagesServiceHandlerServer(context.Background(), app.grpcMux, handlers.NewMessageHandler(app.messageQueryService, app.predictor))
+	vkMessages.RegisterMessagesServiceHandlerServer(context.Background(), app.grpcMux, messages.NewMessageHandler(app.messageQueryService, app.predictor, app.token, app.version, app.factory))
 	app.router.PathPrefix("").Handler(app.grpcMux)
 }

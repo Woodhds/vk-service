@@ -7,6 +7,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MessagesServiceClient interface {
 	GetMessages(ctx context.Context, in *GetMessagesRequest, opts ...grpc.CallOption) (*GetMessagesResponse, error)
+	Repost(ctx context.Context, in *RepostMessageRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type messagesServiceClient struct {
@@ -38,11 +40,21 @@ func (c *messagesServiceClient) GetMessages(ctx context.Context, in *GetMessages
 	return out, nil
 }
 
+func (c *messagesServiceClient) Repost(ctx context.Context, in *RepostMessageRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/MessagesService/Repost", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MessagesServiceServer is the server API for MessagesService service.
 // All implementations must embed UnimplementedMessagesServiceServer
 // for forward compatibility
 type MessagesServiceServer interface {
 	GetMessages(context.Context, *GetMessagesRequest) (*GetMessagesResponse, error)
+	Repost(context.Context, *RepostMessageRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedMessagesServiceServer()
 }
 
@@ -52,6 +64,9 @@ type UnimplementedMessagesServiceServer struct {
 
 func (UnimplementedMessagesServiceServer) GetMessages(context.Context, *GetMessagesRequest) (*GetMessagesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMessages not implemented")
+}
+func (UnimplementedMessagesServiceServer) Repost(context.Context, *RepostMessageRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Repost not implemented")
 }
 func (UnimplementedMessagesServiceServer) mustEmbedUnimplementedMessagesServiceServer() {}
 
@@ -84,6 +99,24 @@ func _MessagesService_GetMessages_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MessagesService_Repost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RepostMessageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessagesServiceServer).Repost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/MessagesService/Repost",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessagesServiceServer).Repost(ctx, req.(*RepostMessageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MessagesService_ServiceDesc is the grpc.ServiceDesc for MessagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -94,6 +127,10 @@ var MessagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMessages",
 			Handler:    _MessagesService_GetMessages_Handler,
+		},
+		{
+			MethodName: "Repost",
+			Handler:    _MessagesService_Repost_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
