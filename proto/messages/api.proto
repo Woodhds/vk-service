@@ -5,7 +5,7 @@ import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 
-option go_package = "github.com/woodhds/vk.post.predict;vk_messages";
+option go_package = "github.com/woodhds/vk.post.messages;vk_messages";
 
 
 service MessagesService {
@@ -19,7 +19,7 @@ service MessagesService {
   rpc Repost(RepostMessageRequest) returns (google.protobuf.Empty) {
     option(google.api.http) = {
       post: "/api/repost",
-      body: "messages"
+      body: "*"
     };
   }
 }

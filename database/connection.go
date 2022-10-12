@@ -4,12 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/mattn/go-sqlite3"
 	"time"
 )
 
 const (
-	maxConnection      = 20
+	maxConnection      = 1
 	connectionTimeout  = 60
 	idleConnectionTime = 30
 )
@@ -35,7 +35,7 @@ func NewConnectionFactory(connectionString string) (ConnectionFactory, error) {
 	if len(connectionString) == 0 {
 		return nil, errors.New("connection string is empty")
 	}
-	if conn, err := sql.Open("pgx", connectionString); err != nil {
+	if conn, err := sql.Open("sqlite3", connectionString); err != nil {
 		return nil, err
 	} else {
 		if e := conn.Ping(); e != nil {

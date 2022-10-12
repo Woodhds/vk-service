@@ -11,13 +11,11 @@ import (
 	vkMessages "github.com/woodhds/vk.service/gen/messages"
 	"github.com/woodhds/vk.service/internal/messages"
 	"github.com/woodhds/vk.service/internal/notifier"
-	"github.com/woodhds/vk.service/internal/predictor"
 	"net/http"
 )
 
 type App struct {
 	router              *mux.Router
-	predictor           predictor.Predictor
 	messageQueryService database.MessagesQueryService
 	notifyService       *notifier.NotifyService
 	usersQueryService   database.UsersQueryService
@@ -43,7 +41,6 @@ func (app *App) Run(port int) {
 }
 
 func NewApp(
-	predictor predictor.Predictor,
 	messageQueryService database.MessagesQueryService,
 	notifyService *notifier.NotifyService,
 	usersQueryService database.UsersQueryService,
@@ -54,7 +51,6 @@ func NewApp(
 	count int) *App {
 	return &App{
 		router:              nil,
-		predictor:           predictor,
 		messageQueryService: messageQueryService,
 		notifyService:       notifyService,
 		usersQueryService:   usersQueryService,
@@ -71,9 +67,8 @@ func (app *App) initializeRoutes() {
 	app.router.Path("/grab").Handler(handlers.ParserHandler(app.factory, app.messagesService, app.count, app.notifyService, app.usersQueryService)).Methods(http.MethodGet)
 	app.router.Path("/users").Handler(handlers.UsersHandler(app.usersQueryService, app.notifyService)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions, http.MethodDelete)
 	app.router.Path("/users/search").Handler(handlers.UsersSearchHandler(app.token, app.version)).Methods(http.MethodGet, http.MethodOptions)
-	app.router.Path("/messages/{ownerId:-?[0-9]+}/{id:[0-9]+}").Handler(handlers.MessageSaveHandler(app.predictor, app.factory)).Methods(http.MethodPost)
 	app.router.Path("/notifications").Handler(notifier.NotificationHandler(app.notifyService)).Methods(http.MethodGet)
 
-	vkMessages.RegisterMessagesServiceHandlerServer(context.Background(), app.grpcMux, messages.NewMessageHandler(app.messageQueryService, app.predictor, app.token, app.version, app.factory))
+	vkMessages.RegisterMessagesServiceHandlerServer(context.Background(), app.grpcMux, messages.NewMessageHandler(app.messageQueryService, app.token, app.version, app.factory))
 	app.router.PathPrefix("").Handler(app.grpcMux)
 }

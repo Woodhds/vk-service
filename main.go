@@ -6,7 +6,6 @@ import (
 	"github.com/woodhds/vk.service/database"
 	vkService "github.com/woodhds/vk.service/internal/app/vk-service"
 	"github.com/woodhds/vk.service/internal/notifier"
-	"github.com/woodhds/vk.service/internal/predictor"
 	"github.com/woodhds/vk.service/internal/vkclient"
 	"log"
 	"os"
@@ -16,7 +15,6 @@ var (
 	token   string
 	version string
 	count   int
-	host    string
 	port    int
 )
 
@@ -24,7 +22,6 @@ func main() {
 	token = os.Getenv("TOKEN")
 	version = os.Getenv("VERSION")
 	ParseInt(&count, 50, os.Getenv("COUNT"))
-	host = os.Getenv("HOST")
 	ParseInt(&port, 4222, os.Getenv("PORT"))
 
 	if token == "" {
@@ -43,7 +40,6 @@ func main() {
 		return
 	}
 
-	predictorClient, _ := predictor.NewClient(host)
 	notifyService := notifier.NewNotifyService()
 	messageQueryService := database.NewMessageQueryService(factory)
 	wallClient, _ := vkclient.NewWallClient(token, version)
@@ -58,7 +54,7 @@ func main() {
 		log.Println(e)
 	}
 
-	app := vkService.NewApp(predictorClient, messageQueryService, notifyService, usersQueryService, factory, messagesService, token, version, count)
+	app := vkService.NewApp(messageQueryService, notifyService, usersQueryService, factory, messagesService, token, version, count)
 
 	app.Initialize()
 

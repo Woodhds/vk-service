@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/woodhds/vk.service/database"
 	vkMessages "github.com/woodhds/vk.service/gen/messages"
-	"github.com/woodhds/vk.service/internal/predictor"
 	vkClient "github.com/woodhds/vk.service/internal/vkclient"
 	"github.com/woodhds/vk.service/message"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -15,7 +14,6 @@ import (
 type messagesImplementation struct {
 	vkMessages.UnimplementedMessagesServiceServer
 	messagesQueryService database.MessagesQueryService
-	predictorClient      predictor.Predictor
 	token                string
 	version              string
 	factory              database.ConnectionFactory
@@ -31,24 +29,6 @@ func (m *messagesImplementation) GetMessages(ctx context.Context, r *vkMessages.
 	}
 
 	response := mapToResponse(data)
-
-	if len(data) > 0 {
-
-		predictions := make([]*predictor.PredictMessage, len(data))
-
-		for i := 0; i < len(predictions); i++ {
-			predictions[i] = &predictor.PredictMessage{
-				OwnerId:  data[i].OwnerID,
-				Id:       data[i].ID,
-				Category: "",
-				Text:     data[i].Text,
-			}
-		}
-
-		if respPredictions, e := m.predictorClient.Predict(predictions); e == nil {
-			mapCategoriesToMessages(response, respPredictions)
-		}
-	}
 
 	return &vkMessages.GetMessagesResponse{
 		Messages: response,
@@ -91,19 +71,6 @@ func (m *messagesImplementation) Repost(ctx context.Context, request *vkMessages
 	return nil, nil
 }
 
-func mapCategoriesToMessages(data []*vkMessages.VkMessageExt, predictions []*predictor.PredictMessage) {
-	for i := 0; i < len(data); i++ {
-		for j := 0; j < len(predictions); j++ {
-			if int32(predictions[j].Id) == data[i].Id && int32(predictions[j].OwnerId) == data[i].OwnerId {
-				data[i].Category = predictions[j].Category
-				data[i].IsAccept = predictions[j].IsAccept
-				data[i].Scores = predictions[j].Scores
-				break
-			}
-		}
-	}
-}
-
 func mapToResponse(data []*message.VkCategorizedMessageModel) []*vkMessages.VkMessageExt {
 	n := len(data)
 	res := make([]*vkMessages.VkMessageExt, n, n)
@@ -131,13 +98,11 @@ func mapToResponse(data []*message.VkCategorizedMessageModel) []*vkMessages.VkMe
 
 func NewMessageHandler(
 	messagesQueryService database.MessagesQueryService,
-	predictorClient predictor.Predictor,
 	token string,
 	version string,
 	factory database.ConnectionFactory) vkMessages.MessagesServiceServer {
 	return &messagesImplementation{
 		messagesQueryService: messagesQueryService,
-		predictorClient:      predictorClient,
 		token:                token,
 		version:              version,
 		factory:              factory,
