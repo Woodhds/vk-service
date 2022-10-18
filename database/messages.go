@@ -2,6 +2,8 @@ package database
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"github.com/woodhds/vk.service/message"
 )
 
@@ -19,20 +21,20 @@ func (m messageQueryService) GetMessages(search string, ctx context.Context) ([]
 	defer conn.Close()
 
 	res, e := conn.QueryContext(ctx, `
-			SELECT messages.Id,
-			       FromId,
-			       Date,
-			       Images,
-			       LikesCount,
-			       Owner,
+			SELECT messages.Id, 
+			       FromId, 
+			       Date, 
+			       Images, 
+			       LikesCount, 
+			       Owner, 
 			       messages.OwnerId,
-			       RepostsCount,
-			       ts_headline(messages.text, phraseto_tsquery($1), 'HighlightAll = true') as Text,
+			       RepostsCount, 
+			       highlight(messages_search, 2, '<b><i><big>', '</big></i></b>') as Text, 
 			       UserReposted
-			FROM messages 
-			inner join messages_search as s on messages.Id = s.Id AND messages.OwnerId = s.OwnerId
-			where s.Text @@ phraseto_tsquery($1)
-			order by ts_rank(to_tsvector(s.text), phraseto_tsquery($1)) desc`, search)
+			FROM messages inner join messages_search as search  on messages.Id = search.Id AND  messages.OwnerId = search.OwnerId 
+				where search.Text MATCH @search
+				order by rank desc
+				`, sql.Named("search", fmt.Sprintf(`"%s"`, search)))
 
 	if e != nil {
 		return nil, e

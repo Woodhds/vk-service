@@ -32,7 +32,7 @@ func main() {
 	log.Printf("Used version: %s", version)
 	log.Printf("Used count: %d", count)
 
-	connectionString := os.Getenv("DATABASE_URL")
+	connectionString := "mydb.db?Pooling=True&MaxPoolSize=100&Cache=shared"
 	factory, err := database.NewConnectionFactory(connectionString)
 
 	if err != nil {

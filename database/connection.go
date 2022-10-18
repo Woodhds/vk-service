@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	maxConnection      = 1
+	maxConnection      = 20
 	connectionTimeout  = 60
 	idleConnectionTime = 30
 )
