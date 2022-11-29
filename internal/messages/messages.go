@@ -3,7 +3,7 @@ package messages
 import (
 	"context"
 	"github.com/woodhds/vk.service/database"
-	vkMessages "github.com/woodhds/vk.service/gen/messages"
+	pb "github.com/woodhds/vk.service/gen/messages"
 	vkClient "github.com/woodhds/vk.service/internal/vkclient"
 	"github.com/woodhds/vk.service/message"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -12,14 +12,14 @@ import (
 )
 
 type messagesImplementation struct {
-	vkMessages.UnimplementedMessagesServiceServer
+	pb.UnimplementedMessagesServiceServer
 	messagesQueryService database.MessagesQueryService
 	token                string
 	version              string
 	factory              database.ConnectionFactory
 }
 
-func (m *messagesImplementation) GetMessages(ctx context.Context, r *vkMessages.GetMessagesRequest) (*vkMessages.GetMessagesResponse, error) {
+func (m *messagesImplementation) GetMessages(ctx context.Context, r *pb.GetMessagesRequest) (*pb.GetMessagesResponse, error) {
 	search := r.GetSearch()
 
 	data, e := m.messagesQueryService.GetMessages(search.GetValue(), ctx)
@@ -30,12 +30,12 @@ func (m *messagesImplementation) GetMessages(ctx context.Context, r *vkMessages.
 
 	response := mapToResponse(data)
 
-	return &vkMessages.GetMessagesResponse{
+	return &pb.GetMessagesResponse{
 		Messages: response,
 	}, nil
 }
 
-func (m *messagesImplementation) Repost(ctx context.Context, request *vkMessages.RepostMessageRequest) (*emptypb.Empty, error) {
+func (m *messagesImplementation) Repost(ctx context.Context, request *pb.RepostMessageRequest) (*emptypb.Empty, error) {
 	wallClient, _ := vkClient.NewWallClient(m.token, m.version)
 	groupClient, _ := vkClient.NewGroupClient(m.token, m.version)
 
@@ -71,12 +71,12 @@ func (m *messagesImplementation) Repost(ctx context.Context, request *vkMessages
 	return nil, nil
 }
 
-func mapToResponse(data []*message.VkCategorizedMessageModel) []*vkMessages.VkMessageExt {
+func mapToResponse(data []*message.VkCategorizedMessageModel) []*pb.VkMessageExt {
 	n := len(data)
-	res := make([]*vkMessages.VkMessageExt, n, n)
+	res := make([]*pb.VkMessageExt, n, n)
 
 	for i := 0; i < n; i++ {
-		res[i] = &vkMessages.VkMessageExt{
+		res[i] = &pb.VkMessageExt{
 			Id:           int32(data[i].ID),
 			FromId:       int32(data[i].FromID),
 			Date:         timestamppb.New(time.Time(*data[i].Date)),
@@ -100,7 +100,7 @@ func NewMessageHandler(
 	messagesQueryService database.MessagesQueryService,
 	token string,
 	version string,
-	factory database.ConnectionFactory) vkMessages.MessagesServiceServer {
+	factory database.ConnectionFactory) pb.MessagesServiceServer {
 	return &messagesImplementation{
 		messagesQueryService: messagesQueryService,
 		token:                token,

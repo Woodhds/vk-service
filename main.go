@@ -5,7 +5,6 @@ import (
 	"github.com/woodhds/vk.service/api/handlers"
 	"github.com/woodhds/vk.service/database"
 	vkService "github.com/woodhds/vk.service/internal/app/vk-service"
-	"github.com/woodhds/vk.service/internal/notifier"
 	"github.com/woodhds/vk.service/internal/vkclient"
 	"log"
 	"os"
@@ -40,7 +39,6 @@ func main() {
 		return
 	}
 
-	notifyService := notifier.NewNotifyService()
 	messageQueryService := database.NewMessageQueryService(factory)
 	wallClient, _ := vkclient.NewWallClient(token, version)
 	usersQueryService, _ := database.NewUserQueryService(factory)
@@ -54,7 +52,7 @@ func main() {
 		log.Println(e)
 	}
 
-	app := vkService.NewApp(messageQueryService, notifyService, usersQueryService, factory, messagesService, token, version, count)
+	app := vkService.NewApp(messageQueryService, usersQueryService, factory, messagesService, token, version, count)
 
 	app.Initialize()
 

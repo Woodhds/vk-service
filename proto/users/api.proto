@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "github.com/woodhds/vk.post.users;vk_users";
+
+service UsersService {
+  rpc GetUsers(google.protobuf.Empty) returns (GetUsersResponse) {
+    option (google.api.http) = {
+      get: "/api/users"
+    };
+  }
+
+  rpc Add(VkUserProto) returns(google.protobuf.Empty) {
+    option(google.api.http) = {
+      post: "/api/users",
+      body: "*"
+    };
+  }
+
+  rpc Delete(DeleteUserRequest) returns (google.protobuf.Empty) {
+    option(google.api.http) = {
+      delete: "/api/users/{id}"
+    };
+  }
+
+  rpc Search(UserSearchRequest) returns (UserSearchResponse) {
+    option(google.api.http) = {
+      post: "/api/users/search",
+      body: "*"
+    };
+  }
+}
+
+message DeleteUserRequest {
+  int32 id = 1;
+}
+
+message GetUsersResponse {
+  repeated VkUserProto users = 1;
+}
+
+message VkUserProto {
+  int32 id = 1;
+  string name = 2;
+  google.protobuf.StringValue avatar = 3;
+}
+
+message UserSearchRequest {
+  google.protobuf.StringValue search = 1;
+}
+
+message UserSearchResponse {
+  repeated VkUserProto users = 1;
+}

@@ -9,15 +9,15 @@ import (
 	"github.com/woodhds/vk.service/api/handlers"
 	"github.com/woodhds/vk.service/database"
 	vkMessages "github.com/woodhds/vk.service/gen/messages"
+	vkUsers "github.com/woodhds/vk.service/gen/users"
 	"github.com/woodhds/vk.service/internal/messages"
-	"github.com/woodhds/vk.service/internal/notifier"
+	"github.com/woodhds/vk.service/internal/users"
 	"net/http"
 )
 
 type App struct {
 	router              *mux.Router
 	messageQueryService database.MessagesQueryService
-	notifyService       *notifier.NotifyService
 	usersQueryService   database.UsersQueryService
 	token               string
 	version             string
@@ -42,7 +42,6 @@ func (app *App) Run(port int) {
 
 func NewApp(
 	messageQueryService database.MessagesQueryService,
-	notifyService *notifier.NotifyService,
 	usersQueryService database.UsersQueryService,
 	factory database.ConnectionFactory,
 	messagesService handlers.VkMessagesService,
@@ -52,7 +51,6 @@ func NewApp(
 	return &App{
 		router:              nil,
 		messageQueryService: messageQueryService,
-		notifyService:       notifyService,
 		usersQueryService:   usersQueryService,
 		token:               token,
 		version:             version,
@@ -63,12 +61,10 @@ func NewApp(
 }
 
 func (app *App) initializeRoutes() {
-	app.router.Path("/like").Handler(handlers.LikeHandler(app.notifyService)).Methods(http.MethodPost)
-	app.router.Path("/grab").Handler(handlers.ParserHandler(app.factory, app.messagesService, app.count, app.notifyService, app.usersQueryService)).Methods(http.MethodGet)
-	app.router.Path("/users").Handler(handlers.UsersHandler(app.usersQueryService, app.notifyService)).Methods(http.MethodGet, http.MethodPost, http.MethodOptions, http.MethodDelete)
-	app.router.Path("/users/search").Handler(handlers.UsersSearchHandler(app.token, app.version)).Methods(http.MethodGet, http.MethodOptions)
-	app.router.Path("/notifications").Handler(notifier.NotificationHandler(app.notifyService)).Methods(http.MethodGet)
+	app.router.Path("/like").Handler(handlers.LikeHandler()).Methods(http.MethodPost)
+	app.router.Path("/grab").Handler(handlers.ParserHandler(app.factory, app.messagesService, app.count, app.usersQueryService)).Methods(http.MethodGet)
 
 	vkMessages.RegisterMessagesServiceHandlerServer(context.Background(), app.grpcMux, messages.NewMessageHandler(app.messageQueryService, app.token, app.version, app.factory))
+	vkUsers.RegisterUsersServiceHandlerServer(context.Background(), app.grpcMux, users.NewUsersHandler(app.usersQueryService, app.token, app.version))
 	app.router.PathPrefix("").Handler(app.grpcMux)
 }
