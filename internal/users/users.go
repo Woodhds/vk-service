@@ -11,7 +11,7 @@ import (
 )
 
 type usersImplementation struct {
-	pb.UnimplementedUsersServiceServer
+	*pb.UnimplementedUsersServiceServer
 	usersService database.UsersQueryService
 	token        string
 	version      string

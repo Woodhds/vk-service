@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"github.com/woodhds/vk.service/api/handlers"
 	"github.com/woodhds/vk.service/database"
 	vkService "github.com/woodhds/vk.service/internal/app/vk-service"
+	"github.com/woodhds/vk.service/internal/parser"
 	"github.com/woodhds/vk.service/internal/vkclient"
 	"log"
 	"os"
@@ -44,7 +44,7 @@ func main() {
 	messageQueryService := database.NewMessageQueryService(factory)
 	wallClient, _ := vkclient.NewWallClient(token, version)
 	usersQueryService, _ := database.NewUserQueryService(factory)
-	messagesService := handlers.NewMessageService(wallClient)
+	messagesService := parser.NewMessageService(wallClient)
 
 	conn, _ := factory.GetConnection(context.Background())
 

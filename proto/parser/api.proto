@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/woodhds/vk.post.parser;parser";
+
+service ParserService {
+  rpc Parse(google.protobuf.Empty) returns (google.protobuf.Empty) {
+    option(google.api.http) = {
+      get: "/api/grab"
+    };
+  }
+}

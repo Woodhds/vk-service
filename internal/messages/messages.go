@@ -12,7 +12,7 @@ import (
 )
 
 type messagesImplementation struct {
-	pb.UnimplementedMessagesServiceServer
+	*pb.UnimplementedMessagesServiceServer
 	messagesQueryService database.MessagesQueryService
 	token                string
 	version              string

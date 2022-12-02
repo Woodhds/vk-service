@@ -6,11 +6,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
-	"github.com/woodhds/vk.service/api/handlers"
 	"github.com/woodhds/vk.service/database"
 	vkMessages "github.com/woodhds/vk.service/gen/messages"
+	parserServer "github.com/woodhds/vk.service/gen/parser"
 	vkUsers "github.com/woodhds/vk.service/gen/users"
 	"github.com/woodhds/vk.service/internal/messages"
+	"github.com/woodhds/vk.service/internal/parser"
 	"github.com/woodhds/vk.service/internal/users"
 	"log"
 	"net/http"
@@ -25,7 +26,7 @@ type App struct {
 	version             string
 	count               int
 	factory             database.ConnectionFactory
-	messagesService     handlers.VkMessagesService
+	messagesService     parser.VkMessagesService
 	grpcMux             *runtime.ServeMux
 	srv                 *http.Server
 }
@@ -63,7 +64,7 @@ func NewApp(
 	messageQueryService database.MessagesQueryService,
 	usersQueryService database.UsersQueryService,
 	factory database.ConnectionFactory,
-	messagesService handlers.VkMessagesService,
+	messagesService parser.VkMessagesService,
 	token string,
 	version string,
 	count int) *App {
@@ -80,9 +81,7 @@ func NewApp(
 }
 
 func (app *App) initializeRoutes() {
-	app.router.Path("/like").Handler(handlers.LikeHandler()).Methods(http.MethodPost)
-	app.router.Path("/grab").Handler(handlers.ParserHandler(app.factory, app.messagesService, app.count, app.usersQueryService)).Methods(http.MethodGet)
-
+	parserServer.RegisterParserServiceHandlerServer(context.Background(), app.grpcMux, parser.NewParserServer(app.factory, app.messagesService, app.count, app.usersQueryService))
 	vkMessages.RegisterMessagesServiceHandlerServer(context.Background(), app.grpcMux, messages.NewMessageHandler(app.messageQueryService, app.token, app.version, app.factory))
 	vkUsers.RegisterUsersServiceHandlerServer(context.Background(), app.grpcMux, users.NewUsersHandler(app.usersQueryService, app.token, app.version))
 	app.router.PathPrefix("").Handler(app.grpcMux)

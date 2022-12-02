@@ -22,6 +22,13 @@ service MessagesService {
       body: "*"
     };
   }
+
+  rpc Like(LikeMessageRequest) returns (google.protobuf.Empty) {
+    option(google.api.http) = {
+      post: "/api/like",
+      body: "*"
+    };
+  }
 }
 
 message GetMessagesRequest {
@@ -54,4 +61,9 @@ message RepostMessageRequest {
     int32 id = 1;
     int32 owner_id = 2 [json_name="owner_Id"];
   }
+}
+
+message LikeMessageRequest {
+  int32 id = 1;
+  int32 owner_id = 2;
 }
