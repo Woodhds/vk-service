@@ -45,7 +45,6 @@ message VkMessageExt {
   bool user_reposted = 10 [json_name = "userReposted"];
   string category = 11;
   bool is_accept = 12 [json_name = "isAccept"];
-  map<string, float> scores = 13;
 }
 
 message RepostMessageRequest {

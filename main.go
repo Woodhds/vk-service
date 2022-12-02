@@ -8,6 +8,8 @@ import (
 	"github.com/woodhds/vk.service/internal/vkclient"
 	"log"
 	"os"
+	"os/signal"
+	"time"
 )
 
 var (
@@ -56,5 +58,15 @@ func main() {
 
 	app.Initialize()
 
-	app.Run(port)
+	go app.Run(port)
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	<-c
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+
+	app.Stop(ctx)
+	os.Exit(0)
 }

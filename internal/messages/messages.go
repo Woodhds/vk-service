@@ -89,7 +89,6 @@ func mapToResponse(data []*message.VkCategorizedMessageModel) []*pb.VkMessageExt
 			UserReposted: data[i].UserReposted,
 			Category:     "",
 			IsAccept:     false,
-			Scores:       nil,
 		}
 	}
 

@@ -14,9 +14,8 @@ type VkRepostMessage struct {
 }
 type VkCategorizedMessageModel struct {
 	*VkMessageModel
-	Category string             `json:"category"`
-	IsAccept bool               `json:"isAccept"`
-	Scores   map[string]float32 `json:"scores"`
+	Category string `json:"category"`
+	IsAccept bool   `json:"isAccept"`
 }
 
 type SimpleMessageModel struct {

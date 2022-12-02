@@ -12,7 +12,9 @@ import (
 	vkUsers "github.com/woodhds/vk.service/gen/users"
 	"github.com/woodhds/vk.service/internal/messages"
 	"github.com/woodhds/vk.service/internal/users"
+	"log"
 	"net/http"
+	"time"
 )
 
 type App struct {
@@ -25,6 +27,7 @@ type App struct {
 	factory             database.ConnectionFactory
 	messagesService     handlers.VkMessagesService
 	grpcMux             *runtime.ServeMux
+	srv                 *http.Server
 }
 
 func (app *App) Initialize() {
@@ -37,7 +40,23 @@ func (app *App) Initialize() {
 }
 
 func (app *App) Run(port int) {
-	fmt.Println(http.ListenAndServe(fmt.Sprintf(":%d", port), cors.Default().Handler(app.router)))
+
+	app.srv = &http.Server{
+		WriteTimeout: time.Second * 15,
+		ReadTimeout:  time.Second * 15,
+		IdleTimeout:  time.Second * 60,
+		Handler:      cors.Default().Handler(app.router),
+		Addr:         fmt.Sprintf(":%d", port),
+	}
+
+	if err := app.srv.ListenAndServe(); err != nil {
+		log.Println(err)
+	}
+}
+
+func (app *App) Stop(ctx context.Context) {
+	app.srv.Shutdown(ctx)
+	log.Println("shutting down")
 }
 
 func NewApp(
