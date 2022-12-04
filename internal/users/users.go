@@ -19,7 +19,7 @@ type usersImplementation struct {
 }
 
 func (i *usersImplementation) GetUsers(ctx context.Context, _ *emptypb.Empty) (*pb.GetUsersResponse, error) {
-	if rows, e := i.usersService.GetFullUsers(ctx); e != nil {
+	if rows, e := i.usersService.GetFullUsers(ctx); e == nil {
 		return &pb.GetUsersResponse{Users: toModel(rows)}, nil
 	} else {
 		return nil, e

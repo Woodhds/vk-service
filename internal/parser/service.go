@@ -79,14 +79,17 @@ func (impl *parserImplementation) Parse(ctx context.Context, _ *emptypb.Empty) (
 	for _, id := range ids {
 		for i := 1; i <= 4; i++ {
 			wg.Add(1)
-			go func(page int, co int, c chan []*message.VkRepostMessage) {
+			go func(userId int, page int, co int, c chan []*message.VkRepostMessage) {
 				defer wg.Done()
-				c <- impl.messageService.GetMessages(id, page, co)
-			}(i, impl.count, postsCh)
+				c <- impl.messageService.GetMessages(userId, page, co)
+			}(id, i, impl.count, postsCh)
 		}
 	}
 
-	httpClient := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+	httpClient := &http.Client{
+		Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
+		Timeout:   time.Second * 30,
+	}
 
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
