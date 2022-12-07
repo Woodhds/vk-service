@@ -58,7 +58,7 @@ func New(post *VkMessage, groups []*VkGroup) *VkMessageModel {
 	}
 
 	for _, i := range post.Attachments {
-		if len(i.Photo.Sizes) > 2 {
+		if len(i.Photo.Sizes) > 3 {
 			model.Images = append(model.Images, i.Photo.Sizes[3].Url)
 		}
 	}
