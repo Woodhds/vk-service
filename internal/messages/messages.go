@@ -106,11 +106,13 @@ func NewMessageHandler(
 	messagesQueryService database.MessagesQueryService,
 	token string,
 	version string,
-	factory database.ConnectionFactory) pb.MessagesServiceServer {
+	factory database.ConnectionFactory,
+	messageService parser.VkMessagesService) pb.MessagesServiceServer {
 	return &messagesImplementation{
 		messagesQueryService: messagesQueryService,
 		token:                token,
 		version:              version,
 		factory:              factory,
+		messageService:       messageService,
 	}
 }

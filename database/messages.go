@@ -8,7 +8,7 @@ import (
 )
 
 type MessagesQueryService interface {
-	GetMessages(search string, ctx context.Context) ([]*message.VkCategorizedMessageModel, error)
+	GetMessages(search string, ctx context.Context) ([]*message.VkMessageModel, error)
 	GetMessageById(ownerId int, id int) *message.SimpleMessageModel
 }
 
@@ -16,7 +16,7 @@ type messageQueryService struct {
 	factory ConnectionFactory
 }
 
-func (m messageQueryService) GetMessages(search string, ctx context.Context) ([]*message.VkCategorizedMessageModel, error) {
+func (m messageQueryService) GetMessages(search string, ctx context.Context) ([]*message.VkMessageModel, error) {
 	conn, _ := m.factory.GetConnection(ctx)
 	defer conn.Close()
 
@@ -40,15 +40,13 @@ func (m messageQueryService) GetMessages(search string, ctx context.Context) ([]
 		return nil, e
 	}
 
-	var data []*message.VkCategorizedMessageModel
+	var data []*message.VkMessageModel
 
 	for res.Next() {
-		m := message.VkCategorizedMessageModel{
-			VkMessageModel: &message.VkMessageModel{},
-		}
+		m := &message.VkMessageModel{}
 		e := res.Scan(&m.ID, &m.FromID, &m.Date, &m.Images, &m.LikesCount, &m.Owner, &m.OwnerID, &m.RepostsCount, &m.Text, &m.UserReposted)
 		if e == nil {
-			data = append(data, &m)
+			data = append(data, m)
 		}
 	}
 	defer res.Close()

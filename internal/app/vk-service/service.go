@@ -82,7 +82,7 @@ func NewApp(
 
 func (app *App) initializeRoutes() {
 	parserServer.RegisterParserServiceHandlerServer(context.Background(), app.grpcMux, parser.NewParserServer(app.factory, app.messagesService, app.count, app.usersQueryService))
-	vkMessages.RegisterMessagesServiceHandlerServer(context.Background(), app.grpcMux, messages.NewMessageHandler(app.messageQueryService, app.token, app.version, app.factory))
+	vkMessages.RegisterMessagesServiceHandlerServer(context.Background(), app.grpcMux, messages.NewMessageHandler(app.messageQueryService, app.token, app.version, app.factory, app.messagesService))
 	vkUsers.RegisterUsersServiceHandlerServer(context.Background(), app.grpcMux, users.NewUsersHandler(app.usersQueryService, app.token, app.version))
 	app.router.PathPrefix("").Handler(app.grpcMux)
 }
