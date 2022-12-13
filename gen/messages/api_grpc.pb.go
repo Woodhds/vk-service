@@ -22,6 +22,7 @@ type MessagesServiceClient interface {
 	GetMessages(ctx context.Context, in *GetMessagesRequest, opts ...grpc.CallOption) (*GetMessagesResponse, error)
 	Repost(ctx context.Context, in *RepostMessageRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Like(ctx context.Context, in *LikeMessageRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Update(ctx context.Context, in *UpdateMessageRequest, opts ...grpc.CallOption) (*VkMessageExt, error)
 }
 
 type messagesServiceClient struct {
@@ -59,6 +60,15 @@ func (c *messagesServiceClient) Like(ctx context.Context, in *LikeMessageRequest
 	return out, nil
 }
 
+func (c *messagesServiceClient) Update(ctx context.Context, in *UpdateMessageRequest, opts ...grpc.CallOption) (*VkMessageExt, error) {
+	out := new(VkMessageExt)
+	err := c.cc.Invoke(ctx, "/MessagesService/Update", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MessagesServiceServer is the server API for MessagesService service.
 // All implementations must embed UnimplementedMessagesServiceServer
 // for forward compatibility
@@ -66,6 +76,7 @@ type MessagesServiceServer interface {
 	GetMessages(context.Context, *GetMessagesRequest) (*GetMessagesResponse, error)
 	Repost(context.Context, *RepostMessageRequest) (*emptypb.Empty, error)
 	Like(context.Context, *LikeMessageRequest) (*emptypb.Empty, error)
+	Update(context.Context, *UpdateMessageRequest) (*VkMessageExt, error)
 	mustEmbedUnimplementedMessagesServiceServer()
 }
 
@@ -81,6 +92,9 @@ func (UnimplementedMessagesServiceServer) Repost(context.Context, *RepostMessage
 }
 func (UnimplementedMessagesServiceServer) Like(context.Context, *LikeMessageRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Like not implemented")
+}
+func (UnimplementedMessagesServiceServer) Update(context.Context, *UpdateMessageRequest) (*VkMessageExt, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedMessagesServiceServer) mustEmbedUnimplementedMessagesServiceServer() {}
 
@@ -149,6 +163,24 @@ func _MessagesService_Like_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MessagesService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMessageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessagesServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/MessagesService/Update",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessagesServiceServer).Update(ctx, req.(*UpdateMessageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MessagesService_ServiceDesc is the grpc.ServiceDesc for MessagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -167,6 +199,10 @@ var MessagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Like",
 			Handler:    _MessagesService_Like_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _MessagesService_Update_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

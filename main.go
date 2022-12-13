@@ -5,6 +5,7 @@ import (
 	"github.com/woodhds/vk.service/database"
 	vkService "github.com/woodhds/vk.service/internal/app/vk-service"
 	"github.com/woodhds/vk.service/internal/parser"
+	sweeper "github.com/woodhds/vk.service/internal/sweeper"
 	"github.com/woodhds/vk.service/internal/vkclient"
 	"log"
 	"os"
@@ -13,10 +14,11 @@ import (
 )
 
 var (
-	token   string
-	version string
-	count   int
-	port    int
+	token            string
+	version          string
+	count            int
+	port             int
+	connectionString string
 )
 
 func main() {
@@ -24,6 +26,7 @@ func main() {
 	version = os.Getenv("VERSION")
 	ParseInt(&count, 50, os.Getenv("COUNT"))
 	ParseInt(&port, 4222, os.Getenv("PORT"))
+	connectionString = os.Getenv("CONNECTION_STRING")
 
 	if token == "" {
 		panic("access token required")
@@ -33,7 +36,9 @@ func main() {
 	log.Printf("Used version: %s", version)
 	log.Printf("Used count: %d", count)
 
-	connectionString := "mydb.db?Pooling=True&MaxPoolSize=100&Cache=shared"
+	if connectionString == "" {
+		connectionString = ":memory?Pooling=True&MaxPoolSize=100&Cache=shared"
+	}
 	factory, err := database.NewConnectionFactory(connectionString)
 
 	if err != nil {
@@ -49,6 +54,11 @@ func main() {
 	conn, _ := factory.GetConnection(context.Background())
 
 	database.Migrate(conn)
+	deleteCtx, cl := context.WithTimeout(context.TODO(), time.Second*15)
+	defer cl()
+
+	sw := sweeper.NewSweeper(factory)
+	go sw.Run(deleteCtx)
 
 	if e := conn.Close(); e != nil {
 		log.Println(e)
