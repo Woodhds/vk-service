@@ -1,8 +1,13 @@
 package message
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
+	pb "github.com/woodhds/vk.service/gen/messages"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"strings"
+	"time"
 )
 
 type ImageArray []string
@@ -70,4 +75,34 @@ func New(post *VkMessage, groups []*VkGroup) *VkMessageModel {
 	}
 
 	return model
+}
+
+func (m *VkMessageModel) Save(conn *sql.Conn, ctx context.Context) error {
+	_, sqlErr := conn.ExecContext(ctx,
+		`
+						insert into messages (Id, FromId, Date, Images, LikesCount, Owner, OwnerId, RepostsCount, Text, UserReposted) 
+						values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+						ON CONFLICT(id, ownerId) DO UPDATE SET 
+						    LikesCount=excluded.LikesCount, 
+						    RepostsCount=excluded.RepostsCount, 
+						    UserReposted=excluded.UserReposted, 
+						    Images=excluded.Images`,
+		m.ID, m.FromID, time.Time(*m.Date), strings.Join(m.Images, ";"), m.LikesCount, m.Owner, m.OwnerID, m.RepostsCount, m.Text, m.UserReposted)
+
+	return sqlErr
+}
+
+func (m *VkMessageModel) ToDto() *pb.VkMessageExt {
+	return &pb.VkMessageExt{
+		Id:           int32(m.ID),
+		FromId:       int32(m.FromID),
+		Date:         timestamppb.New(time.Time(*m.Date)),
+		Images:       m.Images,
+		LikesCount:   int32(m.LikesCount),
+		Owner:        m.Owner,
+		OwnerId:      int32(m.OwnerID),
+		RepostsCount: int32(m.RepostsCount),
+		Text:         m.Text,
+		UserReposted: m.UserReposted,
+	}
 }

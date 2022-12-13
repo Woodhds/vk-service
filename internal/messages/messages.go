@@ -4,11 +4,10 @@ import (
 	"context"
 	"github.com/woodhds/vk.service/database"
 	pb "github.com/woodhds/vk.service/gen/messages"
+	"github.com/woodhds/vk.service/internal/parser"
 	vkClient "github.com/woodhds/vk.service/internal/vkclient"
 	"github.com/woodhds/vk.service/message"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	"time"
 )
 
 type messagesImplementation struct {
@@ -17,6 +16,7 @@ type messagesImplementation struct {
 	token                string
 	version              string
 	factory              database.ConnectionFactory
+	messageService       parser.VkMessagesService
 }
 
 func (m *messagesImplementation) GetMessages(ctx context.Context, r *pb.GetMessagesRequest) (*pb.GetMessagesResponse, error) {
@@ -33,6 +33,26 @@ func (m *messagesImplementation) GetMessages(ctx context.Context, r *pb.GetMessa
 	return &pb.GetMessagesResponse{
 		Messages: response,
 	}, nil
+}
+
+func (m *messagesImplementation) Update(ctx context.Context, msg *pb.UpdateMessageRequest) (*pb.VkMessageExt, error) {
+	data := m.messageService.GetById([]*message.VkRepostMessage{{
+		OwnerID: int(msg.OwnerId),
+		ID:      int(msg.Id),
+	}})
+
+	if len(data) > 0 {
+		conn, _ := m.factory.GetConnection(ctx)
+		defer conn.Close()
+
+		if err := data[0].Save(conn, ctx); err != nil {
+			return nil, err
+		}
+
+		return data[0].ToDto(), nil
+	}
+
+	return nil, nil
 }
 
 func (m *messagesImplementation) Repost(ctx context.Context, request *pb.RepostMessageRequest) (*emptypb.Empty, error) {
@@ -71,25 +91,12 @@ func (m *messagesImplementation) Repost(ctx context.Context, request *pb.RepostM
 	return nil, nil
 }
 
-func mapToResponse(data []*message.VkCategorizedMessageModel) []*pb.VkMessageExt {
+func mapToResponse(data []*message.VkMessageModel) []*pb.VkMessageExt {
 	n := len(data)
 	res := make([]*pb.VkMessageExt, n, n)
 
 	for i := 0; i < n; i++ {
-		res[i] = &pb.VkMessageExt{
-			Id:           int32(data[i].ID),
-			FromId:       int32(data[i].FromID),
-			Date:         timestamppb.New(time.Time(*data[i].Date)),
-			Images:       data[i].Images,
-			LikesCount:   int32(data[i].LikesCount),
-			Owner:        data[i].Owner,
-			OwnerId:      int32(data[i].OwnerID),
-			RepostsCount: int32(data[i].RepostsCount),
-			Text:         data[i].Text,
-			UserReposted: data[i].UserReposted,
-			Category:     "",
-			IsAccept:     false,
-		}
+		res[i] = data[i].ToDto()
 	}
 
 	return res

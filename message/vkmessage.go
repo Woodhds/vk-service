@@ -12,11 +12,6 @@ type VkRepostMessage struct {
 	OwnerID int `json:"owner_id"`
 	ID      int `json:"id"`
 }
-type VkCategorizedMessageModel struct {
-	*VkMessageModel
-	Category string `json:"category"`
-	IsAccept bool   `json:"isAccept"`
-}
 
 type SimpleMessageModel struct {
 	OwnerID int    `json:"ownerId"`
