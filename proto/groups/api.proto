@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/woodhds/vk.post.messages;vk_messages";
+
+service GroupsService {
+  rpc AddFavorite(AddFavoriteGroupRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/groups/favorite",
+      body: "*"
+    };
+  }
+
+  rpc RemoveGroupFromFavorite(RemoveGroupFromFavoriteRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/groups/leave",
+      body: "*"
+    };
+  }
+
+  rpc GetFavorites(GetFavoritesRequest) returns (GetFavoriteResponse) {
+    option (google.api.http) = {
+      post: "/groups",
+      body: "*"
+    };
+  }
+}
+
+message GetFavoritesRequest {
+  int32 page = 1;
+  int32 count = 2;
+}
+
+message GetFavoriteResponse {
+  repeated FavoriteGroup groups = 1;
+}
+
+message FavoriteGroup {
+  int32 id = 1;
+  string name = 2;
+  string avatar = 3;
+}
+
+message AddFavoriteGroupRequest {
+  repeated int32 ids = 1;
+}
+
+message RemoveGroupFromFavoriteRequest {
+  repeated int32 ids = 1;
+}
