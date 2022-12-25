@@ -2,7 +2,6 @@ package parser
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/woodhds/vk.service/database"
@@ -15,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 )
 
 type parserImplementation struct {
@@ -77,7 +75,7 @@ func (impl *parserImplementation) Parse(ctx context.Context, _ *emptypb.Empty) (
 		}
 	}
 
-	httpClient := &http.Client{
+	/*httpClient := &http.Client{
 		Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 		Timeout:   time.Second * 30,
 	}
@@ -85,7 +83,7 @@ func (impl *parserImplementation) Parse(ctx context.Context, _ *emptypb.Empty) (
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
 		go fetch(httpClient, i, postsCh, &wg)
-	}
+	}*/
 
 	go func() {
 		wg.Wait()

@@ -3,6 +3,9 @@ package vkclient
 import (
 	"errors"
 	"fmt"
+	"github.com/woodhds/vk.service/message"
+	"strconv"
+	"strings"
 )
 
 type GroupClient struct {
@@ -11,6 +14,10 @@ type GroupClient struct {
 
 type GroupJoinResponse struct {
 	Response int `json:"response"`
+}
+
+type getGroupResponse struct {
+	Response []*message.VkGroup `json:"response"`
 }
 
 func NewGroupClient(token string, v string) (*GroupClient, error) {
@@ -40,4 +47,33 @@ func (groupClient *GroupClient) Join(groupId int) error {
 	}
 
 	return nil
+}
+
+func (groupClient *GroupClient) Get(groupIds []int) ([]*message.VkGroup, error) {
+	if len(groupIds) > 200 {
+		return nil, errors.New("too many ids")
+	}
+
+	s := make([]string, len(groupIds), len(groupIds))
+
+	for i := 0; i < len(groupIds); i++ {
+		s[i] = strconv.Itoa(groupIds[i])
+	}
+
+	request := strings.Join(s, ",")
+
+	resp, e := groupClient.baseClient.Get("groups.getById", request)
+
+	if e != nil {
+		return nil, e
+	}
+	var data getGroupResponse
+
+	e = resp.Read(&data)
+
+	if e != nil || len(data.Response) == 0 {
+		return nil, errors.New("error join")
+	}
+
+	return data.Response, nil
 }
