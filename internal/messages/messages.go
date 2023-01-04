@@ -41,7 +41,7 @@ func (m *messagesImplementation) Update(ctx context.Context, msg *pb.UpdateMessa
 		ID:      int(msg.Id),
 	}})
 
-	if len(data) > 0 {
+	if data != nil && len(data) > 0 {
 		conn, _ := m.factory.GetConnection(ctx)
 		defer conn.Close()
 
@@ -70,7 +70,7 @@ func (m *messagesImplementation) Repost(ctx context.Context, request *pb.RepostM
 
 	data, _ := wallClient.GetById(getByIdRequest, "is_member")
 
-	for _, d := range data.Response.Groups {
+	for _, d := range data.Groups {
 		if d.IsMember == 0 {
 			groupClient.Join(d.ID)
 		}
@@ -78,7 +78,7 @@ func (m *messagesImplementation) Repost(ctx context.Context, request *pb.RepostM
 
 	conn, _ := m.factory.GetConnection(ctx)
 	defer conn.Close()
-	for _, i := range data.Response.Items {
+	for _, i := range data.Items {
 		if e := wallClient.Repost(&message.VkRepostMessage{OwnerID: i.OwnerID, ID: i.ID}); e == nil {
 			if _, e := conn.ExecContext(ctx, "UPDATE messages SET UserReposted = true where Id = $1 and OwnerId = $2", i.ID, i.OwnerID); e != nil {
 				return nil, e

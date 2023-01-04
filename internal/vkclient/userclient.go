@@ -15,14 +15,12 @@ type UserClient struct {
 }
 
 type vkUserResponse struct {
-	Response struct {
-		Items []struct {
-			Id        int    `json:"id"`
-			FirstName string `json:"first_name"`
-			LastName  string `json:"last_name"`
-			Photo50   string `json:"photo_50"`
-		} `json:"items"`
-	} `json:"response"`
+	Items []struct {
+		Id        int    `json:"id"`
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		Photo50   string `json:"photo_50"`
+	} `json:"items"`
 }
 
 func NewUserClient(token string, v string) (*UserClient, error) {
@@ -46,9 +44,9 @@ func (userClient *UserClient) Search(q string) ([]*VkUserModel, error) {
 
 	resp.Read(data)
 
-	result := make([]*VkUserModel, len(data.Response.Items))
+	result := make([]*VkUserModel, len(data.Items))
 
-	for i, u := range data.Response.Items {
+	for i, u := range data.Items {
 		result[i] = &VkUserModel{u.Id, fmt.Sprintf("%s %s", u.FirstName, u.LastName), u.Photo50}
 	}
 

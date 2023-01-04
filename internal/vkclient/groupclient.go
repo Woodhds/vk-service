@@ -12,14 +12,6 @@ type GroupClient struct {
 	baseClient *BaseClient
 }
 
-type GroupJoinResponse struct {
-	Response int `json:"response"`
-}
-
-type getGroupResponse struct {
-	Response []*message.VkGroup `json:"response"`
-}
-
 func NewGroupClient(token string, v string) (*GroupClient, error) {
 	client, err := New(token, v)
 	if err != nil {
@@ -38,11 +30,11 @@ func (groupClient *GroupClient) Join(groupId int) error {
 		return e
 	}
 
-	var data GroupJoinResponse
+	var data int
 
 	e = resp.Read(&data)
 
-	if e != nil || data.Response == 0 {
+	if e != nil || data == 0 {
 		return errors.New("error join")
 	}
 
@@ -67,13 +59,13 @@ func (groupClient *GroupClient) Get(groupIds []int) ([]*message.VkGroup, error) 
 	if e != nil {
 		return nil, e
 	}
-	var data getGroupResponse
+	var data []*message.VkGroup
 
 	e = resp.Read(&data)
 
-	if e != nil || len(data.Response) == 0 {
+	if e != nil || len(data) == 0 {
 		return nil, errors.New("error join")
 	}
 
-	return data.Response, nil
+	return data, nil
 }

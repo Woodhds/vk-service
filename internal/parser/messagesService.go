@@ -25,7 +25,7 @@ func (m *vkMessageService) GetMessages(id int, page int, count int) []*message.V
 
 	var messages []*message.VkRepostMessage
 
-	for _, v := range data.Response.Items {
+	for _, v := range data.Items {
 		if len(v.CopyHistory) > 0 {
 			messages = append(messages, &message.VkRepostMessage{OwnerID: v.CopyHistory[0].OwnerID, ID: v.CopyHistory[0].ID})
 		}
@@ -35,10 +35,15 @@ func (m *vkMessageService) GetMessages(id int, page int, count int) []*message.V
 }
 
 func (m *vkMessageService) GetById(reposts []*message.VkRepostMessage) []*message.VkMessageModel {
-	posts, _ := m.wallClient.GetById(reposts)
-	result := make([]*message.VkMessageModel, len(posts.Response.Items))
-	for i, post := range posts.Response.Items {
-		result[i] = message.New(post, posts.Response.Groups)
+	posts, e := m.wallClient.GetById(reposts)
+	if e != nil {
+		return nil
+	}
+
+	result := make([]*message.VkMessageModel, len(posts.Items))
+
+	for i, post := range posts.Items {
+		result[i] = message.New(post, posts.Groups)
 	}
 
 	return result

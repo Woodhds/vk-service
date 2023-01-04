@@ -50,7 +50,7 @@ func (gr *groupsImplementation) RemoveGroupFromFavorite(ctx context.Context, req
 }
 
 func (gr *groupsImplementation) GetFavorites(ctx context.Context, request *pb.GetFavoritesRequest) (*pb.GetFavoriteResponse, error) {
-
+	return nil, nil
 }
 
 func NewGroupsServer(queryService database.GroupsQueryService) pb.GroupsServiceServer {

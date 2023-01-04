@@ -27,9 +27,7 @@ type WallGetRequest struct {
 }
 
 type RepostResponse struct {
-	Response struct {
-		Success int `json:"success"`
-	} `json:"response"`
+	Success int `json:"success"`
 }
 
 func NewWallClient(token string, version string) (*wallClient, error) {

@@ -20,23 +20,19 @@ type SimpleMessageModel struct {
 }
 
 type VkWallResponse struct {
-	Response struct {
-		Items []struct {
-			*VkMessage
-			CopyHistory []struct {
-				OwnerID int `json:"owner_id"`
-				ID      int `json:"id"`
-			} `json:"copy_history"`
-		} `json:"items"`
-	} `json:"response"`
+	Items []struct {
+		*VkMessage
+		CopyHistory []struct {
+			OwnerID int `json:"owner_id"`
+			ID      int `json:"id"`
+		} `json:"copy_history"`
+	} `json:"items"`
 }
 
 type VkResponse struct {
-	Response struct {
-		Items    []*VkMessage `json:"items"`
-		Groups   []*VkGroup   `json:"groups"`
-		Profiles []*VkProfile `json:"profiles"`
-	} `json:"response"`
+	Items    []*VkMessage `json:"items"`
+	Groups   []*VkGroup   `json:"groups"`
+	Profiles []*VkProfile `json:"profiles"`
 }
 
 type VkMessage struct {

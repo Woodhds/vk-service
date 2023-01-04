@@ -24,6 +24,16 @@ type Response struct {
 	reader *http.Response
 }
 
+type VkError struct {
+	Code    int32  `json:"error_code"`
+	Message string `json:"error_msg"`
+}
+
+type VkHttpResponse struct {
+	Error    *VkError    `json:"error"`
+	Response interface{} `json:"response"`
+}
+
 var mutex sync.Mutex
 
 func (resp *Response) Read(dest interface{}) error {
@@ -35,10 +45,18 @@ func (resp *Response) Read(dest interface{}) error {
 		return err
 	}
 
-	err = json.Unmarshal(b, &dest)
+	httpResponse := VkHttpResponse{
+		Response: dest,
+	}
+
+	err = json.Unmarshal(b, &httpResponse)
 
 	if err != nil {
 		return err
+	}
+
+	if httpResponse.Error != nil {
+		return errors.New(httpResponse.Error.Message)
 	}
 
 	return nil
