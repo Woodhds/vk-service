@@ -25,6 +25,12 @@ type VkMessageModel struct {
 	UserReposted bool       `json:"userReposted"`
 }
 
+type GroupModel struct {
+	Id     int64  `json:"id"`
+	Name   string `json:"name"`
+	Avatar string `json:"avatar"`
+}
+
 func (n *ImageArray) Scan(value interface{}) error {
 	if value == nil {
 		*n = make(ImageArray, 0)
