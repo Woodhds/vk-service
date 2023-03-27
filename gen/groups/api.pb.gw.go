@@ -197,7 +197,7 @@ func RegisterGroupsServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/.GroupsService/GetFavorites", runtime.WithHTTPPathPattern("/groups"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/.GroupsService/GetFavorites", runtime.WithHTTPPathPattern("/api/groups"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -305,7 +305,7 @@ func RegisterGroupsServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/.GroupsService/GetFavorites", runtime.WithHTTPPathPattern("/groups"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/.GroupsService/GetFavorites", runtime.WithHTTPPathPattern("/api/groups"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -329,7 +329,7 @@ var (
 
 	pattern_GroupsService_RemoveGroupFromFavorite_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"groups", "leave"}, ""))
 
-	pattern_GroupsService_GetFavorites_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"groups"}, ""))
+	pattern_GroupsService_GetFavorites_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "groups"}, ""))
 )
 
 var (

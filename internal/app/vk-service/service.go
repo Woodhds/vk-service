@@ -7,9 +7,11 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
 	"github.com/woodhds/vk.service/database"
+	vkGroups "github.com/woodhds/vk.service/gen/groups"
 	vkMessages "github.com/woodhds/vk.service/gen/messages"
 	parserServer "github.com/woodhds/vk.service/gen/parser"
 	vkUsers "github.com/woodhds/vk.service/gen/users"
+	"github.com/woodhds/vk.service/internal/groups"
 	"github.com/woodhds/vk.service/internal/messages"
 	"github.com/woodhds/vk.service/internal/parser"
 	"github.com/woodhds/vk.service/internal/users"
@@ -22,6 +24,7 @@ type App struct {
 	router              *mux.Router
 	messageQueryService database.MessagesQueryService
 	usersQueryService   database.UsersQueryService
+	groupsQueryService  database.GroupsQueryService
 	token               string
 	version             string
 	count               int
@@ -63,6 +66,7 @@ func (app *App) Stop(ctx context.Context) {
 func NewApp(
 	messageQueryService database.MessagesQueryService,
 	usersQueryService database.UsersQueryService,
+	groupsQueryService database.GroupsQueryService,
 	factory database.ConnectionFactory,
 	messagesService parser.VkMessagesService,
 	token string,
@@ -72,6 +76,7 @@ func NewApp(
 		router:              nil,
 		messageQueryService: messageQueryService,
 		usersQueryService:   usersQueryService,
+		groupsQueryService:  groupsQueryService,
 		token:               token,
 		version:             version,
 		count:               count,
@@ -84,5 +89,6 @@ func (app *App) initializeRoutes() {
 	parserServer.RegisterParserServiceHandlerServer(context.Background(), app.grpcMux, parser.NewParserServer(app.factory, app.messagesService, app.count, app.usersQueryService))
 	vkMessages.RegisterMessagesServiceHandlerServer(context.Background(), app.grpcMux, messages.NewMessageHandler(app.messageQueryService, app.token, app.version, app.factory, app.messagesService))
 	vkUsers.RegisterUsersServiceHandlerServer(context.Background(), app.grpcMux, users.NewUsersHandler(app.usersQueryService, app.token, app.version))
+	vkGroups.RegisterGroupsServiceHandlerServer(context.Background(), app.grpcMux, groups.NewGroupsServer(app.groupsQueryService))
 	app.router.PathPrefix("").Handler(app.grpcMux)
 }

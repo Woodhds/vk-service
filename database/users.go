@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/woodhds/vk.service/internal/vkclient"
 )
@@ -85,12 +84,8 @@ func (m *userQueryService) Delete(id int, ctx context.Context) error {
 	return nil
 }
 
-func NewUserQueryService(conn ConnectionFactory) (UsersQueryService, error) {
-	if conn == nil {
-		return nil, errors.New("factory empty")
-	}
-
+func NewUserQueryService(conn ConnectionFactory) UsersQueryService {
 	return &userQueryService{
 		factory: conn,
-	}, nil
+	}
 }

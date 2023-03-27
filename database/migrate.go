@@ -75,5 +75,18 @@ func Migrate(conn *sql.Conn) {
 
 	log.Println("Trigger created")
 
+	log.Println("creating favourite groups table")
+
+	if _, e := conn.ExecContext(context.Background(), `
+		CREATE TABLE favorite_groups (
+		    id integer,
+		    name text,
+		    avatar text,
+		    PRIMARY KEY (id)
+		)
+	`); e != nil {
+		log.Fatalln("error creating favourite groups table: ", e)
+	}
+
 	log.Println("Stop migrate")
 }

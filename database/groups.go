@@ -18,7 +18,7 @@ func (g *groupsImplementation) Get(page int, count int, ctx context.Context) ([]
 	conn, _ := g.connectionFactory.GetConnection(ctx)
 	defer conn.Close()
 
-	rows, e := conn.QueryContext(ctx, "SELECT id, name, avatar FROM favorite_groups offset $1 limit $2", (page-1)*count, count)
+	rows, e := conn.QueryContext(ctx, "SELECT id, name, avatar FROM favorite_groups limit $1 offset $2", count, (page-1)*count)
 
 	if e != nil {
 		return nil, e

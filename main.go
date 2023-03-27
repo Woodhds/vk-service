@@ -47,8 +47,9 @@ func main() {
 	}
 
 	messageQueryService := database.NewMessageQueryService(factory)
+	usersQueryService := database.NewUserQueryService(factory)
+	groupsQueryService := database.NewGroupsQueryService(factory)
 	wallClient, _ := vkclient.NewWallClient(token, version)
-	usersQueryService, _ := database.NewUserQueryService(factory)
 	messagesService := parser.NewMessageService(wallClient)
 
 	conn, _ := factory.GetConnection(context.Background())
@@ -64,7 +65,7 @@ func main() {
 		log.Println(e)
 	}
 
-	app := vkService.NewApp(messageQueryService, usersQueryService, factory, messagesService, token, version, count)
+	app := vkService.NewApp(messageQueryService, usersQueryService, groupsQueryService, factory, messagesService, token, version, count)
 
 	app.Initialize()
 

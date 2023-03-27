@@ -22,7 +22,7 @@ service GroupsService {
 
   rpc GetFavorites(GetFavoritesRequest) returns (GetFavoriteResponse) {
     option (google.api.http) = {
-      post: "/groups",
+      post: "/api/groups",
       body: "*"
     };
   }
