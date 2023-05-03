@@ -78,7 +78,7 @@ func Migrate(conn *sql.Conn) {
 	log.Println("creating favourite groups table")
 
 	if _, e := conn.ExecContext(context.Background(), `
-		CREATE TABLE favorite_groups (
+		CREATE TABLE IF NOT EXISTS favorite_groups (
 		    id integer,
 		    name text,
 		    avatar text,

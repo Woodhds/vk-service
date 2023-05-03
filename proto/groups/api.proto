@@ -8,14 +8,14 @@ option go_package = "github.com/woodhds/vk.post.messages;vk_messages";
 service GroupsService {
   rpc AddFavorite(AddFavoriteGroupRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/groups/favorite",
+      post: "/api/groups/favorite",
       body: "*"
     };
   }
 
   rpc RemoveGroupFromFavorite(RemoveGroupFromFavoriteRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/groups/leave",
+      post: "/api/groups/leave",
       body: "*"
     };
   }
