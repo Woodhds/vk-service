@@ -28,31 +28,21 @@ func (m *messagesImplementation) GetMessages(ctx context.Context, r *pb.GetMessa
 		return nil, e
 	}
 
-	response := mapToResponse(data)
+	getById := make([]*message.VkRepostMessage, len(data), len(data))
+	for i, datum := range data {
+		getById[i] = &message.VkRepostMessage{
+			OwnerID: datum.OwnerID,
+			ID:      datum.ID,
+		}
+	}
+
+	messages := m.messageService.GetById(getById)
+
+	response := mapToResponse(messages)
 
 	return &pb.GetMessagesResponse{
 		Messages: response,
 	}, nil
-}
-
-func (m *messagesImplementation) Update(ctx context.Context, msg *pb.UpdateMessageRequest) (*pb.VkMessageExt, error) {
-	data := m.messageService.GetById([]*message.VkRepostMessage{{
-		OwnerID: int(msg.OwnerId),
-		ID:      int(msg.Id),
-	}})
-
-	if data != nil && len(data) > 0 {
-		conn, _ := m.factory.GetConnection(ctx)
-		defer conn.Close()
-
-		if err := data[0].Save(conn, ctx); err != nil {
-			return nil, err
-		}
-
-		return data[0].ToDto(), nil
-	}
-
-	return nil, nil
 }
 
 func (m *messagesImplementation) Repost(ctx context.Context, request *pb.RepostMessageRequest) (*emptypb.Empty, error) {
@@ -79,13 +69,8 @@ func (m *messagesImplementation) Repost(ctx context.Context, request *pb.RepostM
 	conn, _ := m.factory.GetConnection(ctx)
 	defer conn.Close()
 	for _, i := range data.Items {
-		if e := wallClient.Repost(&message.VkRepostMessage{OwnerID: i.OwnerID, ID: i.ID}); e == nil {
-			if _, e := conn.ExecContext(ctx, "UPDATE messages SET UserReposted = true where Id = $1 and OwnerId = $2", i.ID, i.OwnerID); e != nil {
-				return nil, e
-			}
-		} else {
-			return nil, e
-		}
+		e := wallClient.Repost(&message.VkRepostMessage{OwnerID: i.OwnerID, ID: i.ID})
+		return nil, e
 	}
 
 	return nil, nil

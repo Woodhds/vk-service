@@ -3,10 +3,8 @@ package message
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	pb "github.com/woodhds/vk.service/gen/messages"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"strings"
 	"time"
 )
 
@@ -29,17 +27,6 @@ type GroupModel struct {
 	Id     int64  `json:"id"`
 	Name   string `json:"name"`
 	Avatar string `json:"avatar"`
-}
-
-func (n *ImageArray) Scan(value interface{}) error {
-	if value == nil {
-		*n = make(ImageArray, 0)
-	}
-	s := fmt.Sprint(value)
-
-	*n = strings.Split(s, ";")
-
-	return nil
 }
 
 func New(post *VkMessage, groups []*VkGroup) *VkMessageModel {
@@ -86,14 +73,10 @@ func New(post *VkMessage, groups []*VkGroup) *VkMessageModel {
 func (m *VkMessageModel) Save(conn *sql.Conn, ctx context.Context) error {
 	_, sqlErr := conn.ExecContext(ctx,
 		`
-						insert into messages (Id, FromId, Date, Images, LikesCount, Owner, OwnerId, RepostsCount, Text, UserReposted) 
-						values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
-						ON CONFLICT(id, ownerId) DO UPDATE SET 
-						    LikesCount=excluded.LikesCount, 
-						    RepostsCount=excluded.RepostsCount, 
-						    UserReposted=excluded.UserReposted, 
-						    Images=excluded.Images`,
-		m.ID, m.FromID, time.Time(*m.Date), strings.Join(m.Images, ";"), m.LikesCount, m.Owner, m.OwnerID, m.RepostsCount, m.Text, m.UserReposted)
+insert into messages (Id, FromId, Date, OwnerId, Text) 
+values ($1, $2, $3, $4, $5) 
+ON CONFLICT(id, ownerId) DO NOTHING`,
+		m.ID, m.FromID, time.Time(*m.Date), m.OwnerID, m.Text)
 
 	return sqlErr
 }

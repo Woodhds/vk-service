@@ -29,13 +29,6 @@ service MessagesService {
       body: "*"
     };
   }
-
-  rpc Update(UpdateMessageRequest) returns(VkMessageExt) {
-    option(google.api.http) = {
-      put: "/api/update",
-      body: "*"
-    };
-  }
 }
 
 message GetMessagesRequest {
@@ -69,11 +62,6 @@ message RepostMessageRequest {
 }
 
 message LikeMessageRequest {
-  int32 id = 1;
-  int32 owner_id = 2 [json_name="ownerId"];
-}
-
-message UpdateMessageRequest {
   int32 id = 1;
   int32 owner_id = 2 [json_name="ownerId"];
 }

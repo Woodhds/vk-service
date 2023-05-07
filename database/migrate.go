@@ -30,13 +30,8 @@ func Migrate(conn *sql.Conn) {
 		Id Integer,
 		FromId Integer,
 		Date DateTime,
-		Images TExt,
-		LikesCount integer,
-		Owner Text,
 		OwnerId Integer,
 		RepostedFrom integer,
-		RepostsCount Integer,
-		UserReposted Boolean,
 		Text text,
 		Primary Key(Id, OwnerId) 
 		)`
