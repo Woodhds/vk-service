@@ -66,6 +66,10 @@ func (gr *groupsImplementation) GetFavorites(ctx context.Context, request *pb.Ge
 	}
 }
 
-func NewGroupsServer(queryService database.GroupsQueryService) pb.GroupsServiceServer {
-	return &groupsImplementation{queryService: queryService}
+func NewGroupsServer(queryService database.GroupsQueryService, token string, version string) pb.GroupsServiceServer {
+	return &groupsImplementation{
+		queryService: queryService,
+		token:        token,
+		version:      version,
+	}
 }

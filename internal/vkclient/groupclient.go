@@ -53,8 +53,9 @@ func (groupClient *GroupClient) Get(groupIds []int) ([]*message.VkGroup, error) 
 	}
 
 	request := strings.Join(s, ",")
+	query := fmt.Sprintf("group_ids=%s&fields=is_member", request)
 
-	resp, e := groupClient.baseClient.Get("groups.getById", request)
+	resp, e := groupClient.baseClient.Get("groups.getById", query)
 
 	if e != nil {
 		return nil, e
